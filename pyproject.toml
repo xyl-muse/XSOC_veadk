@@ -1,0 +1,48 @@
+[project]
+name = "xsoc-agent"
+version = "1.0.0"
+description = "智能安全运营多智能体系统，基于火山引擎veadk框架开发"
+authors = [
+  { name = "XSOC Team", email = "xsoc@example.com" }
+]
+requires-python = ">=3.10"
+dependencies = [
+  # VEADK智能体框架
+  "veadk-python>=0.1.0",
+
+  # 业务依赖
+  "httpx>=0.25.2",  # HTTP客户端，用于对接内部API
+  "pydantic>=2.5.0", # 数据模型校验
+  "pyyaml>=6.0.1",   # YAML配置解析
+  "uuid6>=2023.11.28", # UUID生成
+  "python-dateutil>=2.8.2", # 时间处理
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=7.4.3",
+  "pytest-asyncio>=0.21.1",
+  "pytest-cov>=4.1.0",
+  "pytest-mock>=3.12.0",
+  "black>=23.11.0",
+  "isort>=5.12.0",
+  "pre-commit>=3.6.0",
+]
+
+[tool.black]
+line-length = 120
+target-version = ['py310']
+
+[tool.isort]
+profile = "black"
+line_length = 120
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-v --cov=src --cov-report=term-missing"
