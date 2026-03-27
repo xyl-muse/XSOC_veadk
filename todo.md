@@ -16,10 +16,12 @@
 ### Phase 1: 专家智能体开发（预计5天）
 #### 1.1 事件研判专家 ✅（框架已完成，待完善业务逻辑）
 - [ ] 完善自然语言解析能力（支持人工输入事件转换为标准格式）
-- [ ] 优化研判规则与提示词
+- [ ] 新增XDR多格式告警适配（支持扁平结构、state嵌套结构、Unix时间戳转换）
+- [ ] 增强SecurityEvent.from_input字段提取能力（适配uuId/hostIp/riskTag等XDR原生字段）
+- [ ] 优化研判规则与提示词（增加对riskTag/threatDefineName/gptResult等字段的利用）
 - [ ] 增加多源证据交叉验证逻辑
 - [ ] 实现误报规则库匹配
-- [ ] 单元测试编写（tests/unit/agents/test_investigation_agent.py）
+- [ ] 单元测试编写（tests/unit/agents/test_investigation_agent.py，使用真实XDR告警样例）
 #### 1.2 溯源分析专家智能体
 - [ ] 智能体基础框架实现（继承VEADK Agent）
 - [ ] 溯源逻辑与攻击路径还原算法
