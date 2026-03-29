@@ -87,13 +87,13 @@ VEADK（Volcengine Agent Development Kit）是火山引擎推出的企业级 AI 
 | `las`          | 火山引擎 AI 数据湖 LAS 工具，提供多模态数据集管理                            | `veadk.tools.builtin_tools.las`        |
 | `vod`          | 火山引擎视频云 MCP 工具，支持视频剪辑处理                                     | `veadk.tools.builtin_tools.vod`        |
 
-#### 工具架构设计：按意图分类的工具集
+#### 工具架构设计：按意图分类的工具集（异步支持）
 
-**架构思路**：按意图和动作设计 3-6 个工具，每个工具融合多个平台的接口，通过适配器统一处理不同格式的响应。
+**架构思路**：按意图和动作设计 3-6 个工具，每个工具融合多个平台的接口，通过适配器统一处理不同格式的响应，支持异步调用。
 
 ```python
 # 风险事件查询工具（包含 XDR/NDR 平台）
-def risk_query(
+async def risk_query(
     asset_ip: str,       # 目标资产IP
     time_range: str = "24h",  # 时间范围
     platform: str = "xdr",  # 平台选择
@@ -102,15 +102,15 @@ def risk_query(
     """风险事件查询工具（XDR/NDR 平台融合）"""
 
     if platform == "xdr":
-        # XDR 平台接口调用
-        return xdr_risk_query(asset_ip, time_range, tool_context)
+        # XDR 平台接口调用（异步）
+        return await xdr_risk_query(asset_ip, time_range, tool_context)
     elif platform == "ndr":
-        # NDR 平台接口调用
-        return ndr_risk_query(asset_ip, time_range, tool_context)
+        # NDR 平台接口调用（异步）
+        return await ndr_risk_query(asset_ip, time_range, tool_context)
     else:
-        # 跨平台综合查询
-        xdr_result = xdr_risk_query(asset_ip, time_range, tool_context)
-        ndr_result = ndr_risk_query(asset_ip, time_range, tool_context)
+        # 跨平台综合查询（异步）
+        xdr_result = await xdr_risk_query(asset_ip, time_range, tool_context)
+        ndr_result = await ndr_risk_query(asset_ip, time_range, tool_context)
         return merge_risk_results(xdr_result, ndr_result)
 
 # 资产信息查询工具（包含 XDR/NDR/Corplink 平台）
@@ -360,7 +360,7 @@ response = await runner.run(messages="查询IP 1.2.3.4的威胁情报")
 
 **重要提示**：智能体开发应严格遵循 VEADK 开发规范，直接继承 `veadk.Agent` 基类，避免重复开发底层框架能力。
 
-#### 智能体基础框架（继承自 VEADK Agent）
+#### 智能体基础框架（继承自 VEADK Agent，异步支持）
 
 ```python
 from veadk import Agent, Runner
@@ -380,6 +380,12 @@ class InvestigationAgent(Agent):
 4. 若为误报，说明误报原因并标记事件
 5. 若为真实攻击，提取关键攻击线索传递给溯源分析专家
     """
+
+    async def run(self, event_data: Dict[str, Any]) -> Dict[str, Any]:
+        """智能体执行入口"""
+        # 事件处理逻辑
+        # 使用 await self.call_tool 异步调用工具
+        pass
 
 # 智能体使用示例
 if __name__ == "__main__":
@@ -481,7 +487,46 @@ agent = Agent(
 
 ## 开发计划与 Phase 1 专家智能体
 
-### 🚀 Phase 1 开发重点
+## 系统API的意图分类（六大主工具）
+
+### 1. 资产信息查询工具
+- **功能**：查询服务器/办公终端资产信息
+- **覆盖平台**：XDR、NDR、Corplink
+- **API分类**：资产信息查询接口
+
+### 2. 攻击源威胁情报查询工具
+- **功能**：查询IP/域名/哈希的恶意性判定
+- **覆盖平台**：XDR、NDR、微步在线
+- **API分类**：威胁情报查询接口
+
+### 3. 事件信息查询工具
+- **功能**：查询事件详情、举证信息、进程实体
+- **覆盖平台**：XDR、NDR、EDR
+- **API分类**：事件信息查询接口
+
+### 4. 告警及风险信息查询工具
+- **功能**：查询告警详情、风险资产、风险标签
+- **覆盖平台**：XDR、NDR、EDR
+- **API分类**：告警及风险信息查询接口
+
+### 5. 处置操作工具
+- **功能**：执行IP封禁、白名单管理、终端隔离、告警状态更新
+- **覆盖平台**：XDR、NDR、EDR
+- **API分类**：处置操作接口
+
+### 6. 数据归档工具
+- **功能**：事件归档回写、钉钉AI表格数据同步、ITSM工单发起
+- **覆盖平台**：XDR、钉钉、ITSM
+- **API分类**：数据归档接口
+
+### API意图分类流程
+1. 收集各平台的API接口文档
+2. 分析接口功能和意图
+3. 将接口归类到对应的主工具下
+4. 为每个主工具实现统一的调用接口
+5. 智能体通过主工具索引调用具体系统工具
+
+## 🚀 Phase 1 开发重点
 
 #### 事件研判专家智能体
 
@@ -511,7 +556,7 @@ agent = Agent(
 4. 实现工具的 run 方法
 5. 编写单元测试
 
-#### 智能体协作流程
+#### 智能体协作流程（异步支持）
 
 ```mermaid
 graph LR
@@ -520,8 +565,10 @@ graph LR
     B -->|真实事件| D[溯源分析专家]
     D --> E[风险处置专家]
     E --> C
-    C --> F[XDR 归档 + 钉钉表格同步]
+    C --> F[XDR 归档 + ITSM工单 + 钉钉表格同步]
 ```
+
+**说明**：所有智能体间的调用和工具调用均已支持异步，提高了系统的并发处理能力和响应速度。
 
 ## 技术架构
 
