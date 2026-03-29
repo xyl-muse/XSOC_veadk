@@ -3,8 +3,20 @@ from enum import Enum
 from datetime import datetime
 from typing import List, Dict, Optional, Any
 from pydantic import BaseModel, Field
+import re
 
-from src.utils.helpers import generate_uuid, get_current_time
+import uuid
+from datetime import datetime
+
+
+def generate_uuid() -> str:
+    """生成唯一UUID"""
+    return str(uuid.uuid4())
+
+
+def get_current_time() -> str:
+    """获取当前时间字符串，格式：YYYY-MM-DD HH:MM:SS"""
+    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
 class EventType(str, Enum):
@@ -124,7 +136,7 @@ class SecurityEvent(BaseModel):
 
     @classmethod
     def from_input(cls, input_data: Dict[str, Any]) -> "SecurityEvent":
-        """从输入数据创建事件实例"""
+        """从输入数据创建事件实例，支持XDR多格式告警适配和自然语言解析"""
         # 处理事件类型
         event_type = input_data.get("event_type")
         if isinstance(event_type, str):
@@ -137,28 +149,134 @@ class SecurityEvent(BaseModel):
         source = input_data.get("source", "manual_input")
         source_name = "XDR系统推送" if source == "xdr_api" else "人工录入"
 
-        # 自动提取IP信息
-        attack_source_ip = input_data.get("attack_source_ip") or cls._extract_ip(input_data.get("raw_data", {}), "source")
-        target_asset_ip = input_data.get("target_asset_ip") or cls._extract_ip(input_data.get("raw_data", {}), "target")
+        # 获取原始数据
+        raw_data = input_data.get("raw_data", {})
 
-        return cls(
+        # 自动提取IP信息（支持XDR多格式告警适配）
+        attack_source_ip = input_data.get("attack_source_ip") or cls._extract_ip(raw_data, "source")
+        target_asset_ip = input_data.get("target_asset_ip") or cls._extract_ip(raw_data, "target")
+
+        # 自动提取事件ID（支持uuId/hostIp/riskTag等XDR原生字段）
+        event_id = input_data.get("event_id") or raw_data.get("event_id") or raw_data.get("uuId") or raw_data.get("alert_id")
+
+        # 自动提取攻击时间（支持Unix时间戳转换）
+        attack_time = input_data.get("attack_time") or raw_data.get("attack_time") or raw_data.get("create_time")
+        if attack_time:
+            if isinstance(attack_time, int) or (isinstance(attack_time, str) and attack_time.isdigit()):
+                # 处理Unix时间戳
+                try:
+                    timestamp = int(attack_time)
+                    if timestamp > 1000000000000:
+                        timestamp = timestamp / 1000  # 毫秒转秒
+                    attack_time = datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
+                except:
+                    pass
+
+        # 自动提取风险标签和威胁定义名称
+        risk_tags = raw_data.get("riskTag") or raw_data.get("risk_tags", [])
+        if isinstance(risk_tags, str):
+            risk_tags = [risk_tags]
+
+        threat_define_name = raw_data.get("threatDefineName") or raw_data.get("threat_define_name", "")
+
+        # 自动提取优先级
+        priority = input_data.get("priority", Priority.MEDIUM)
+        if isinstance(priority, str):
+            priority = priority.lower()
+            if priority in ["low", "medium", "high", "critical"]:
+                priority = Priority(priority)
+            else:
+                try:
+                    priority_level = int(priority)
+                    if priority_level >= 3:
+                        priority = Priority.CRITICAL
+                    elif priority_level == 2:
+                        priority = Priority.HIGH
+                    elif priority_level == 1:
+                        priority = Priority.MEDIUM
+                    else:
+                        priority = Priority.LOW
+                except:
+                    priority = Priority.MEDIUM
+
+        # 创建事件实例
+        event = cls(
+            event_id=event_id,
             event_type=event_type,
             event_type_name=event_type.display_name,
             source=source,
             source_name=source_name,
-            raw_data=input_data.get("raw_data", {}),
+            raw_data=raw_data,
             attack_source_ip=attack_source_ip,
             target_asset_ip=target_asset_ip,
-            attack_time=input_data.get("attack_time"),
+            attack_time=attack_time,
+            priority=priority,
         )
+
+        # 保存提取到的额外字段到上下文
+        event.context["risk_tags"] = risk_tags
+        event.context["threat_define_name"] = threat_define_name
+        event.context["gpt_result"] = raw_data.get("gptResult") or raw_data.get("gpt_result", "")
+
+        return event
 
     @staticmethod
     def _extract_ip(data: Dict[str, Any], ip_type: str) -> Optional[str]:
-        """从原始数据中提取IP地址"""
-        ip_keys = [f"{ip_type}_ip", f"{ip_type}Ip", ip_type, f"src_ip" if ip_type == "source" else f"dst_ip"]
+        """从原始数据中提取IP地址，支持XDR多格式告警适配"""
+        # 基础IP字段
+        ip_keys = [
+            f"{ip_type}_ip", f"{ip_type}Ip", ip_type,
+            f"src_ip" if ip_type == "source" else f"dst_ip"
+        ]
+
+        # XDR扁平结构字段
+        xdr_flat_keys = [
+            "attack_source_ip", "attackSourceIp", "source_ip", "sourceIp",
+            "target_asset_ip", "targetAssetIp", "target_ip", "targetIp"
+        ]
+
+        # XDR state嵌套结构字段
+        xdr_state_keys = [
+            "state.attack_source_ip", "state.attackSourceIp", "state.source_ip", "state.sourceIp",
+            "state.target_asset_ip", "state.targetAssetIp", "state.target_ip", "state.targetIp"
+        ]
+
+        # 遍历基础字段
         for key in ip_keys:
             if key in data and isinstance(data[key], str) and len(data[key]) > 0:
                 return data[key]
+
+        # 遍历XDR扁平结构字段
+        for key in xdr_flat_keys:
+            if key in data and isinstance(data[key], str) and len(data[key]) > 0:
+                # 根据ip_type筛选相关字段
+                if (ip_type == "source" and "source" in key) or (ip_type == "target" and "target" in key):
+                    return data[key]
+
+        # 遍历XDR state嵌套结构字段
+        for key in xdr_state_keys:
+            parts = key.split(".")
+            value = data
+            for part in parts:
+                if part in value:
+                    value = value[part]
+                else:
+                    break
+            else:
+                if isinstance(value, str) and len(value) > 0:
+                    return value
+
+        # 从原始数据中尝试其他可能的字段
+        for key, value in data.items():
+            if isinstance(value, str) and len(value) > 0:
+                # 简单的IP地址匹配（IPv4）
+                if re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", value):
+                    # 根据key名称判断是否与ip_type相关
+                    if (ip_type == "source" and any(s in key.lower() for s in ["source", "src", "attack"])) or \
+                       (ip_type == "target" and any(t in key.lower() for t in ["target", "dst", "asset"])) or \
+                       ip_type not in ["source", "target"]:
+                        return value
+
         return None
 
     def model_dump(self, **kwargs) -> Dict[str, Any]:

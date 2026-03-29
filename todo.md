@@ -14,14 +14,14 @@
 - [x] 标准化安全事件Schema定义（schemas/security_event.py）
 ---
 ### Phase 1: 专家智能体开发（预计5天）
-#### 1.1 事件研判专家 ✅（框架已完成，待完善业务逻辑）
-- [ ] 完善自然语言解析能力（支持人工输入事件转换为标准格式）
-- [ ] 新增XDR多格式告警适配（支持扁平结构、state嵌套结构、Unix时间戳转换）
-- [ ] 增强SecurityEvent.from_input字段提取能力（适配uuId/hostIp/riskTag等XDR原生字段）
-- [ ] 优化研判规则与提示词（增加对riskTag/threatDefineName/gptResult等字段的利用）
-- [ ] 增加多源证据交叉验证逻辑
-- [ ] 实现误报规则库匹配
-- [ ] 单元测试编写（tests/unit/agents/test_investigation_agent.py，使用真实XDR告警样例）
+#### 1.1 事件研判专家 ✅（已完成）
+- [x] 完善自然语言解析能力（支持人工输入事件转换为标准格式）
+- [x] 新增XDR多格式告警适配（支持扁平结构、state嵌套结构、Unix时间戳转换）
+- [x] 增强SecurityEvent.from_input字段提取能力（适配uuId/hostIp/riskTag等XDR原生字段）
+- [x] 优化研判规则与提示词（增加对riskTag/threatDefineName/gptResult等字段的利用）
+- [x] 增加多源证据交叉验证逻辑
+- [x] 实现误报规则库匹配（包含白名单、业务行为、高频告警等规则）
+- [x] 单元测试编写（tests/unit/agents/test_investigation_agent.py，使用真实XDR告警样例）
 #### 1.2 溯源分析专家智能体
 - [ ] 智能体基础框架实现（继承VEADK Agent）
 - [ ] 溯源逻辑与攻击路径还原算法
@@ -46,35 +46,36 @@
 ---
 ### Phase 2: 安全工具集开发（预计5天，**依赖docs/目录下的接口文档**）
 > 📌 所有工具开发的唯一输入依据：`docs/`目录下对应的MCP/API接口说明文档，文档到位后才能启动开发
-#### 2.0 前置任务：接口文档收集
-- [ ] 微步在线威胁情报MCP接口文档放入docs/
-- [ ] XDR平台API接口文档放入docs/
-- [ ] 资产管理系统API接口文档放入docs/
-- [ ] NDR平台API接口文档放入docs/
-- [ ] EDR平台API接口文档放入docs/
-- [ ] 钉钉开放平台API接口文档放入docs/
+#### 2.0 前置任务：接口文档收集 ✅（已完成）
+- [x] XDR平台API接口文档放入docs&data_demo/api_docs/XDR/（JSON格式）
+- [x] NDR平台API接口文档放入docs&data_demo/api_docs/NDR/（JSON格式）
+- [x] Corplink平台API接口文档放入docs&data_demo/api_docs/corplink/（JSON格式）
+- [x] 钉钉AI表格API接口文档放入docs&data_demo/api_docs/DingtalkAITable/（JSON格式）
+- [x] 微步在线威胁情报API接口文档放入docs&data_demo/api_docs/ThreatbookMCP/（PDF格式）
 #### 2.1 已完成示例工具 ✅
-- [x] 微步在线威胁情报查询工具（示例模板，待根据docs/文档替换为真实MCP实现）
-#### 2.2 资产信息查询工具（依赖docs/资产API接口文档.md）
-- [ ] 服务器资产信息查询工具
-- [ ] 办公终端资产信息查询工具
-#### 2.3 攻击源威胁情报查询工具（依赖docs/威胁情报API接口文档.md）
+- [x] 微步在线威胁情报查询工具（ThreatIntelQueryTool）
+#### 2.2 资产信息查询工具（依赖docs&data_demo/api_docs/XDR/资产信息查询和docs&data_demo/api_docs/corplink/资产信息查询）
+- [ ] 资产信息查询工具（支持xdr/ndr/corplink/all平台）
+- [ ] 合并跨平台资产信息逻辑
+#### 2.3 攻击源威胁情报查询工具（依赖docs&data_demo/api_docs/XDR/威胁情报查询和docs&data_demo/api_docs/ThreatbookMCP/）
 - [ ] IP威胁情报查询工具
 - [ ] 域名威胁情报查询工具
 - [ ] 哈希值威胁情报查询工具
-#### 2.4 事件信息查询工具（依赖docs/XDR接口文档.md）
+- [ ] 合并跨平台威胁情报逻辑
+#### 2.4 事件信息查询工具（依赖docs&data_demo/api_docs/XDR/事件信息查询和docs&data_demo/api_docs/XDR/事件详情查询）
 - [ ] 事件详情查询工具
 - [ ] 事件举证信息查询工具
 - [ ] 事件进程实体查询工具
-#### 2.5 告警及风险信息查询工具（依赖docs/XDR接口文档.md）
+#### 2.5 告警及风险信息查询工具（依赖docs&data_demo/api_docs/XDR/告警信息查询和docs&data_demo/api_docs/XDR/风险资产查询）
 - [ ] 告警详情查询工具
 - [ ] 风险资产查询工具
 - [ ] 风险标签查询工具
-#### 2.6 处置操作工具（依赖docs/XDR接口文档.md）
+#### 2.6 处置操作工具（依赖docs&data_demo/api_docs/XDR/处置操作和docs&data_demo/api_docs/XDR/白名单管理）
 - [ ] 告警状态更新工具
 - [ ] IP封禁操作工具
 - [ ] 白名单管理工具
-#### 2.7 数据归档工具（依赖docs/XDR接口文档.md）
+- [ ] 终端隔离操作工具
+#### 2.7 数据归档工具（依赖docs&data_demo/api_docs/XDR/事件信息查询和docs&data_demo/api_docs/DingtalkAITable/）
 - [ ] 事件归档回写工具
 - [ ] 钉钉AI表格数据同步工具
 #### 2.8 工具单元测试
