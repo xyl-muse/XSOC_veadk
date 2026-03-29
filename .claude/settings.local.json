@@ -20,7 +20,9 @@
       "Bash(cd \"E:\\\\Study\\\\AI\\\\XSOC_veadk\" && python -c \"from veadk import Agent; print\\(dir\\(Agent\\)\\); print\\(Agent.__annotations__\\)\")",
       "Bash(cd \"E:\\\\Study\\\\AI\\\\XSOC_veadk\" && python run_investigation_agent.py)",
       "Bash(cd \"E:\\\\Study\\\\AI\\\\XSOC_veadk\" && rm -f run_investigation_agent.py)",
-      "Bash(cd \"E:\\\\Study\\\\AI\\\\XSOC_veadk\" && rm -f tasks.txt)"
+      "Bash(cd \"E:\\\\Study\\\\AI\\\\XSOC_veadk\" && rm -f tasks.txt)",
+      "Bash(cd \"E:\\\\Study\\\\AI\\\\XSOC_veadk\" && python -m pytest tests/unit/agents/test_tracing_agent.py -v)",
+      "Bash(cd \"E:\\\\Study\\\\AI\\\\XSOC_veadk\" && ls -la \"docs&data_demo/alert_demo/\" && cat \"docs&data_demo/alert_demo/alert2.json\")"
     ]
   }
 }
