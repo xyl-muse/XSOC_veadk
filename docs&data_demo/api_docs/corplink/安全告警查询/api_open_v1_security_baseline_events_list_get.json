@@ -1,0 +1,168 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "飞连API - 获取终端安全基线告警日志",
+    "description": "查询终端安全基线告警日志，包括基线检测、软件检测、进程检测等事件",
+    "version": "1.0.0",
+    "contact": {
+      "name": "飞连 API Support"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://{endpoint}",
+      "description": "飞连平台服务器",
+      "variables": {
+        "endpoint": {
+          "default": "feilian.example.com",
+          "description": "飞连平台地址"
+        }
+      }
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "security",
+      "description": "终端安全接口"
+    }
+  ],
+  "paths": {
+    "/api/open/v1/security/baseline/events/list": {
+      "get": {
+        "tags": ["security"],
+        "summary": "获取终端安全基线告警日志",
+        "description": "查询终端安全基线告警日志，需要接口权限【终端安全-获取终端安全基线告警日志】以及对应用户的权限",
+        "operationId": "listBaselineEvents",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "schema": {"type": "string"},
+            "description": "用户ID，格式为ou_xxx"
+          },
+          {
+            "name": "did",
+            "in": "query",
+            "schema": {"type": "string"},
+            "description": "设备ID"
+          },
+          {
+            "name": "module",
+            "in": "query",
+            "schema": {"type": "integer"},
+            "description": "事件类型，1为基线；2为软件；3为进程"
+          },
+          {
+            "name": "level",
+            "in": "query",
+            "schema": {"type": "integer"},
+            "description": "事件等级：1为低危；2为中危；3为高危"
+          },
+          {
+            "name": "os",
+            "in": "query",
+            "schema": {"type": "string"},
+            "description": "操作系统，windows/Mac/Linux/Android/iOS"
+          },
+          {
+            "name": "strategy_name",
+            "in": "query",
+            "schema": {"type": "string"},
+            "description": "策略名称，支持模糊查询"
+          },
+          {
+            "name": "start_time",
+            "in": "query",
+            "schema": {"type": "integer"},
+            "description": "事件告警开始时间，Unix时间戳(单位秒)"
+          },
+          {
+            "name": "end_time",
+            "in": "query",
+            "schema": {"type": "integer"},
+            "description": "事件告警结束时间，Unix时间戳(单位秒)"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {"type": "integer", "default": 20},
+            "description": "单页数据量，默认值20，最大值200"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {"type": "integer", "default": 0},
+            "description": "分页数据偏移量，默认0"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {"type": "integer", "description": "错误码"},
+                    "action": {"type": "string", "description": "动作"},
+                    "message": {"type": "string", "description": "提示信息"},
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "count": {"type": "integer", "description": "告警数量"},
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "strategy_name": {"type": "string", "description": "策略名称"},
+                              "event_time": {"type": "integer", "description": "事件告警时间，Unix时间戳(单位秒)"},
+                              "module": {"type": "integer", "description": "模块，1:基线 2:进程 3:应用"},
+                              "event_desc": {"type": "string", "description": "事件描述"},
+                              "level": {"type": "integer", "description": "事件等级，1:低危 2:中危 3:高危"},
+                              "device_ip": {"type": "string", "description": "设备IP"},
+                              "did": {"type": "string", "description": "设备did"},
+                              "device_name": {"type": "string", "description": "设备名称"},
+                              "device_os": {"type": "string", "description": "操作系统"},
+                              "user_info": {
+                                "type": "object",
+                                "description": "用户信息",
+                                "properties": {
+                                  "id": {"type": "string", "description": "用户ID，格式为ou_xxx"},
+                                  "full_name": {"type": "string", "description": "用户名"},
+                                  "mobile": {"type": "string", "description": "手机号"},
+                                  "email": {"type": "string", "description": "邮箱"},
+                                  "status": {"type": "integer", "description": "用户状态，1为启用；2为禁用；3为离职；4为启用但未激活"},
+                                  "department_id": {"type": "string", "description": "主部门ID，格式为od_xxx"},
+                                  "department_path": {"type": "string", "description": "主部门路径"}
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "访问令牌认证"
+      }
+    }
+  }
+}

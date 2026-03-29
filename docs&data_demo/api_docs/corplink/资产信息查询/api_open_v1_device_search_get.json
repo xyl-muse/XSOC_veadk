@@ -1,0 +1,222 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "飞连API - 获取设备列表",
+    "description": "查询终端设备列表信息，包括设备基本信息、硬件配置、用户信息等",
+    "version": "1.0.0",
+    "contact": {
+      "name": "飞连 API Support"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://{endpoint}",
+      "description": "飞连平台服务器",
+      "variables": {
+        "endpoint": {
+          "default": "feilian.example.com",
+          "description": "飞连平台地址"
+        }
+      }
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "device",
+      "description": "终端管理接口"
+    }
+  ],
+  "paths": {
+    "/api/open/v1/device/search": {
+      "get": {
+        "tags": ["device"],
+        "summary": "获取设备列表",
+        "description": "查询终端设备列表，需要接口权限【终端管理-获取设备信息】以及对应用户的权限",
+        "operationId": "searchDevices",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "schema": {"type": "string"},
+            "description": "用户ID，格式为ou_xxx"
+          },
+          {
+            "name": "did",
+            "in": "query",
+            "schema": {"type": "string"},
+            "description": "设备did"
+          },
+          {
+            "name": "brand",
+            "in": "query",
+            "schema": {"type": "string"},
+            "description": "设备品牌"
+          },
+          {
+            "name": "device_name",
+            "in": "query",
+            "schema": {"type": "string"},
+            "description": "设备名称"
+          },
+          {
+            "name": "client_ip",
+            "in": "query",
+            "schema": {"type": "string"},
+            "description": "设备IP"
+          },
+          {
+            "name": "serial_number",
+            "in": "query",
+            "schema": {"type": "string"},
+            "description": "设备SN号"
+          },
+          {
+            "name": "mac_addrs",
+            "in": "query",
+            "schema": {"type": "string"},
+            "description": "设备MAC地址"
+          },
+          {
+            "name": "app_ver",
+            "in": "query",
+            "schema": {"type": "string"},
+            "description": "客户端版本号"
+          },
+          {
+            "name": "client_os",
+            "in": "query",
+            "schema": {"type": "string"},
+            "description": "客户端操作系统"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {"type": "string"},
+            "description": "设备状态，0:失效设备 1:活跃设备 2:休眠设备，多个参数使用逗号分隔"
+          },
+          {
+            "name": "created_start_time",
+            "in": "query",
+            "schema": {"type": "integer"},
+            "description": "首次在线开始时间，Unix时间戳(单位秒)"
+          },
+          {
+            "name": "created_end_time",
+            "in": "query",
+            "schema": {"type": "integer"},
+            "description": "首次在线结束时间，Unix时间戳(单位秒)"
+          },
+          {
+            "name": "updated_start_time",
+            "in": "query",
+            "schema": {"type": "integer"},
+            "description": "最近在线开始时间，Unix时间戳(单位秒)"
+          },
+          {
+            "name": "updated_end_time",
+            "in": "query",
+            "schema": {"type": "integer"},
+            "description": "最近在线结束时间，Unix时间戳(单位秒)"
+          },
+          {
+            "name": "group_id",
+            "in": "query",
+            "schema": {"type": "integer"},
+            "description": "终端分组ID"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {"type": "integer", "default": 20},
+            "description": "单页数据量，默认值20，最大值200"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {"type": "integer", "default": 0},
+            "description": "分页数据偏移量，默认0"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {"type": "integer", "description": "错误码"},
+                    "action": {"type": "string", "description": "动作"},
+                    "message": {"type": "string", "description": "提示信息"},
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "count": {"type": "integer", "description": "设备总数"},
+                        "devices": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "did": {"type": "string", "description": "设备did"},
+                              "user_id": {"type": "string", "description": "用户id，格式为ou_xxx"},
+                              "device_name": {"type": "string", "description": "设备名称"},
+                              "os": {"type": "string", "description": "设备操作系统"},
+                              "os_ver": {"type": "string", "description": "设备操作系统版本"},
+                              "app_ver": {"type": "string", "description": "客户端版本信息"},
+                              "brand": {"type": "string", "description": "设备品牌"},
+                              "model": {"type": "string", "description": "设备型号"},
+                              "language": {"type": "string", "description": "设备语言"},
+                              "client_ip": {"type": "string", "description": "设备IP"},
+                              "created_time": {"type": "integer", "description": "创建时间，Unix时间戳"},
+                              "updated_time": {"type": "integer", "description": "更新时间，Unix时间戳"},
+                              "full_name": {"type": "string", "description": "所属用户名称"},
+                              "department_name": {"type": "string", "description": "部门名称"},
+                              "software_num": {"type": "integer", "description": "软件安装数量"},
+                              "is_live": {"type": "boolean", "description": "设备是否活跃"},
+                              "device_status": {"type": "integer", "description": "设备状态，0:失效 1:活跃 2:休眠"},
+                              "device_info": {
+                                "type": "object",
+                                "description": "设备信息",
+                                "properties": {
+                                  "memory_total": {"type": "integer", "description": "设备总内存MB"},
+                                  "memory_available": {"type": "integer", "description": "设备可用内存MB"},
+                                  "disk_total": {"type": "integer", "description": "设备总磁盘MB"},
+                                  "disk_available": {"type": "integer", "description": "设备可用磁盘MB"},
+                                  "cpu_model": {"type": "string", "description": "设备CPU型号"},
+                                  "gpu_model": {"type": "string", "description": "设备GPU型号"},
+                                  "nic_type": {"type": "string", "description": "设备网卡型号"},
+                                  "mac_addrs": {"type": "array", "items": {"type": "string"}, "description": "MAC地址"},
+                                  "login_user": {"type": "string", "description": "设备账户名称"},
+                                  "is_vm": {"type": "boolean", "description": "是否为虚拟机"},
+                                  "serial_number": {"type": "string", "description": "设备序列号"}
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "访问令牌认证"
+      }
+    }
+  }
+}

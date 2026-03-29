@@ -1,0 +1,163 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "飞连API - 获取防病毒告警日志",
+    "description": "查询终端防病毒告警日志，包括恶意文件检测、病毒处置等事件",
+    "version": "1.0.0",
+    "contact": {
+      "name": "飞连 API Support"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://{endpoint}",
+      "description": "飞连平台服务器",
+      "variables": {
+        "endpoint": {
+          "default": "feilian.example.com",
+          "description": "飞连平台地址"
+        }
+      }
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "security",
+      "description": "终端安全接口"
+    }
+  ],
+  "paths": {
+    "/api/open/v1/security/anti_virus/events/list": {
+      "get": {
+        "tags": ["security"],
+        "summary": "获取防病毒告警日志",
+        "description": "查询终端防病毒告警日志，需要接口权限【终端安全-获取终端防病毒告警日志】以及对应用户的权限",
+        "operationId": "listAntiVirusEvents",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "schema": {"type": "string"},
+            "description": "用户的id，格式为ou_xxx"
+          },
+          {
+            "name": "did",
+            "in": "query",
+            "schema": {"type": "string"},
+            "description": "设备did"
+          },
+          {
+            "name": "os",
+            "in": "query",
+            "schema": {"type": "string"},
+            "description": "操作系统，windows/Mac/Linux"
+          },
+          {
+            "name": "start_time",
+            "in": "query",
+            "schema": {"type": "integer"},
+            "description": "事件告警开始时间，Unix时间戳(单位秒)"
+          },
+          {
+            "name": "end_time",
+            "in": "query",
+            "schema": {"type": "integer"},
+            "description": "事件告警结束时间，Unix时间戳(单位秒)"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {"type": "integer", "default": 20},
+            "description": "单页数据量，默认值20，最大值200"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {"type": "integer", "default": 0},
+            "description": "分页数据偏移量，默认0"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {"type": "integer", "description": "错误码"},
+                    "action": {"type": "string", "description": "动作"},
+                    "message": {"type": "string", "description": "提示信息"},
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "count": {"type": "integer", "description": "告警数量"},
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "uuid": {"type": "string", "description": "事件uuid"},
+                              "event_time": {"type": "integer", "description": "告警事件发生的时间戳"},
+                              "remediation": {"type": "integer", "description": "对恶意文件的处置动作：1->仅提醒；2->提醒隔离可恢复；3->提醒隔离不可恢复"},
+                              "strategy_name": {"type": "string", "description": "策略名称"},
+                              "client_ip": {"type": "string", "description": "客户端IP"},
+                              "device_ip": {"type": "string", "description": "设备IP"},
+                              "did": {"type": "string", "description": "设备did"},
+                              "device_name": {"type": "string", "description": "设备名称"},
+                              "device_hostname": {"type": "string", "description": "设备主机名称"},
+                              "device_serial_number": {"type": "string", "description": "设备的SN号"},
+                              "device_os": {"type": "string", "description": "设备操作系统"},
+                              "user_info": {
+                                "type": "object",
+                                "description": "用户信息",
+                                "properties": {
+                                  "id": {"type": "string", "description": "用户ID，格式为ou_xxx"},
+                                  "full_name": {"type": "string", "description": "用户名"},
+                                  "mobile": {"type": "string", "description": "手机号"},
+                                  "email": {"type": "string", "description": "邮箱"},
+                                  "status": {"type": "integer", "description": "用户状态，1为启用；2为禁用；3为离职；4为启用但未激活"},
+                                  "department_id": {"type": "string", "description": "主部门ID，格式为od_xxx"},
+                                  "department_path": {"type": "string", "description": "主部门路径"}
+                                }
+                              },
+                              "file_info": {
+                                "type": "object",
+                                "description": "恶意文件信息",
+                                "properties": {
+                                  "path": {"type": "string", "description": "路径"},
+                                  "threat": {"type": "string", "description": "威胁类型"},
+                                  "type": {"type": "string", "description": "恶意文件类型"},
+                                  "size": {"type": "integer", "description": "文件大小"},
+                                  "md5": {"type": "string", "description": "文件md5"}
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "访问令牌认证"
+      }
+    }
+  }
+}
