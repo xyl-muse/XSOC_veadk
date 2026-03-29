@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "WebSearch",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(python << 'EOF'\nimport sys\nfrom typing import Dict, Any\n\n# 模拟任务更新\ntask_id = \"1\"\nstatus = \"completed\"\ndescription = \"已完成 CLAUDE.md 文件的编写和优化，严格遵循 VEADK 开发规范。主要内容包括：\\\\n1. 项目对齐与更新说明\\\\n2. 工具架构设计（5个意图工具，每个融合多个平台接口）\\\\n3. 专家智能体开发规范（继承 VEADK Agent 基类）\\\\n4. 提示词设计（使用 VEADK 原生语法）\\\\n5. 强调 VEADK 内置工具优先原则\"\n\nprint\\(f\"任务 {task_id} 已完成：{description}\"\\)\nEOF)",
+      "Bash(echo \"{\\\\\"tool\\\\\": \\\\\"TaskUpdate\\\\\", \\\\\"params\\\\\": {\\\\\"taskId\\\\\": \\\\\"1\\\\\", \\\\\"status\\\\\": \\\\\"completed\\\\\", \\\\\"owner\\\\\": \\\\\"Claude\\\\\", \\\\\"description\\\\\": \\\\\"已完成 CLAUDE.md 文件的编写和优化，严格遵循 VEADK 开发规范。主要内容包括：项目对齐与更新说明、工具架构设计（5个意图工具，每个融合多个平台接口）、专家智能体开发规范（继承 VEADK Agent 基类）、提示词设计（使用 VEADK 原生语法）、强调 VEADK 内置工具优先原则。\\\\\"}}\")"
     ]
   }
 }

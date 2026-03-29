@@ -55,27 +55,36 @@
 - [ ] 钉钉开放平台API接口文档放入docs/
 #### 2.1 已完成示例工具 ✅
 - [x] 微步在线威胁情报查询工具（示例模板，待根据docs/文档替换为真实MCP实现）
-#### 2.2 XDR API工具集（依赖docs/XDR接口文档.md）
-- [ ] XDR事件查询工具
-- [ ] XDR举证详情查询工具
-- [ ] XDR事件归档回写工具
-#### 2.3 资产查询工具集（依赖docs/资产API接口文档.md）
+#### 2.2 资产信息查询工具（依赖docs/资产API接口文档.md）
 - [ ] 服务器资产信息查询工具
 - [ ] 办公终端资产信息查询工具
-#### 2.4 NDR/EDR API工具集（依赖docs/NDR接口文档.md、docs/EDR接口文档.md）
-- [ ] NDR告警详情查询工具
-- [ ] EDR告警详情查询工具
-- [ ] NDR IP封禁工具
-- [ ] EDR终端隔离工具
-#### 2.5 钉钉API工具集（依赖docs/钉钉API接口文档.md）
-- [ ] 钉钉消息通知工具
-- [ ] 钉钉AI表格数据写入工具
-#### 2.6 工具单元测试
+#### 2.3 攻击源威胁情报查询工具（依赖docs/威胁情报API接口文档.md）
+- [ ] IP威胁情报查询工具
+- [ ] 域名威胁情报查询工具
+- [ ] 哈希值威胁情报查询工具
+#### 2.4 事件信息查询工具（依赖docs/XDR接口文档.md）
+- [ ] 事件详情查询工具
+- [ ] 事件举证信息查询工具
+- [ ] 事件进程实体查询工具
+#### 2.5 告警及风险信息查询工具（依赖docs/XDR接口文档.md）
+- [ ] 告警详情查询工具
+- [ ] 风险资产查询工具
+- [ ] 风险标签查询工具
+#### 2.6 处置操作工具（依赖docs/XDR接口文档.md）
+- [ ] 告警状态更新工具
+- [ ] IP封禁操作工具
+- [ ] 白名单管理工具
+#### 2.7 数据归档工具（依赖docs/XDR接口文档.md）
+- [ ] 事件归档回写工具
+- [ ] 钉钉AI表格数据同步工具
+#### 2.8 工具单元测试
 - [ ] 微步威胁情报工具单元测试（tests/unit/tools/test_threat_intel_tool.py）
-- [ ] XDR API工具集单元测试（tests/unit/tools/test_xdr_tools.py）
-- [ ] 资产查询工具集单元测试（tests/unit/tools/test_asset_tools.py）
-- [ ] NDR/EDR工具集单元测试（tests/unit/tools/test_ndr_edr_tools.py）
-- [ ] 钉钉API工具集单元测试（tests/unit/tools/test_dingtalk_tools.py）
+- [ ] 资产信息查询工具单元测试（tests/unit/tools/test_asset_query.py）
+- [ ] 攻击源威胁情报查询工具单元测试（tests/unit/tools/test_threat_intel.py）
+- [ ] 事件信息查询工具单元测试（tests/unit/tools/test_event_query.py）
+- [ ] 告警及风险信息查询工具单元测试（tests/unit/tools/test_alert_risk_query.py）
+- [ ] 处置操作工具单元测试（tests/unit/tools/test_response_tools.py）
+- [ ] 数据归档工具单元测试（tests/unit/tools/test_data_archive.py）
 ---
 ### Phase 3: 流程与规则开发（预计3天）
 - [ ] 智能体协作流程定义（flows/security_event_flow.py）
