@@ -1,0 +1,170 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "XDR平台API - 安全事件模块",
+    "description": "XDR平台安全事件相关API接口，包括事件查询、处置、举证等功能",
+    "version": "1.0.0",
+    "contact": {
+      "name": "XDR API Support"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://{host}",
+      "description": "XDR平台服务器",
+      "variables": {
+        "host": {
+          "default": "xdr.example.com",
+          "description": "XDR平台主机地址"
+        }
+      }
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/api/xdr/v1/incidents/{uuid}/proof": {
+      "get": {
+        "tags": [
+          "incidents"
+        ],
+        "summary": "根据事件uuId获取举证信息",
+        "description": "获取指定安全事件的举证信息",
+        "operationId": "getIncidentProof",
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "事件ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "example": "Success"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "成功"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "description": "事件名称"
+                        },
+                        "uuId": {
+                          "type": "string",
+                          "description": "事件ID"
+                        },
+                        "endTime": {
+                          "type": "integer",
+                          "format": "int64",
+                          "description": "事件最近发生时间"
+                        },
+                        "eventThreatDefine": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "事件定性"
+                        },
+                        "severity": {
+                          "type": "integer",
+                          "description": "事件等级，0:信息,1:低危,2:中危,3:高危,4:严重"
+                        },
+                        "riskTag": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "事件标签"
+                        },
+                        "dataSource": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "事件数据源"
+                        },
+                        "alertTimeLine": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "description": "告警名称"
+                              },
+                              "alertId": {
+                                "type": "string",
+                                "description": "告警ID"
+                              },
+                              "lastTime": {
+                                "type": "integer",
+                                "format": "int64",
+                                "description": "告警最近发生时间"
+                              },
+                              "severity": {
+                                "type": "integer",
+                                "description": "告警等级"
+                              },
+                              "threatSubTypeDesc": {
+                                "type": "string",
+                                "description": "告警威胁分类"
+                              },
+                              "stage": {
+                                "type": "integer",
+                                "description": "告警阶段"
+                              },
+                              "devSourceNames": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "description": "告警设备来源"
+                              },
+                              "proof": {
+                                "type": "object",
+                                "description": "告警举证信息"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT Token认证，在Header中添加Authorization: Bearer {token}"
+      }
+    }
+  }
+}

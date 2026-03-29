@@ -86,4 +86,13 @@ htmlcov/
 .cache/
 
 #工具的原始文档
-docs&data_demo
+docs&data_demo/alert_demo/
+docs&data_demo/datascropts/
+docs&data_demo/api_docs/corplink/
+docs&data_demo/api_docs/XDR/XDRAUTH
+
+
+
+#所有数据化的原始文档剔除
+*.zip
+*.pdf

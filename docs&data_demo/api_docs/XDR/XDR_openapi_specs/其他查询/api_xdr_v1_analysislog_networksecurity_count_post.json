@@ -1,0 +1,205 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "XDR平台API - 安全告警模块(第二部分)",
+    "description": "XDR平台安全告警相关API接口，包括告警处置、查询、安全日志等功能",
+    "version": "1.0.0",
+    "contact": {
+      "name": "XDR API Support"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://{host}",
+      "description": "XDR平台服务器",
+      "variables": {
+        "host": {
+          "default": "xdr.example.com",
+          "description": "XDR平台主机地址"
+        }
+      }
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/api/xdr/v1/analysislog/networksecurity/count": {
+      "post": {
+        "tags": [
+          "security-log"
+        ],
+        "summary": "查询网络安全日志数量",
+        "description": "查询网络安全日志数量统计",
+        "operationId": "getNetworkSecurityLogCount",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "startTimestamp": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "秒级开始时间戳"
+                  },
+                  "endTimestamp": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "秒级结束时间戳"
+                  },
+                  "productTypes": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "上报设备产品"
+                  },
+                  "accessDirections": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "description": "访问方向"
+                  },
+                  "threatClasses": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "威胁一级分类"
+                  },
+                  "threatTypes": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "威胁二级分类"
+                  },
+                  "threatSubTypes": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "威胁三级分类"
+                  },
+                  "srcIps": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "源IP"
+                  },
+                  "dstIps": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "目的IP"
+                  },
+                  "attackStates": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "description": "攻击状态"
+                  },
+                  "severities": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "description": "严重性"
+                  },
+                  "filterParam": {
+                    "type": "object",
+                    "properties": {
+                      "srcCountryNames": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "攻击源国家"
+                      },
+                      "srcProvinceNames": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "攻击源省份"
+                      }
+                    }
+                  },
+                  "excludeParam": {
+                    "type": "object",
+                    "properties": {
+                      "srcCountryNames": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "排除攻击源国家"
+                      },
+                      "srcProvinceNames": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "排除攻击源省份"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "example": "Success"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "请求成功"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "total": {
+                          "type": "integer",
+                          "format": "int64",
+                          "description": "网络安全日志总数"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT Token认证，在Header中添加Authorization: Bearer {token}"
+      }
+    }
+  }
+}

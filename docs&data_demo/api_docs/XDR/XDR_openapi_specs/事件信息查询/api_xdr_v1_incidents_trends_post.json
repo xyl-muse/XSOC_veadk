@@ -1,0 +1,204 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "XDR平台API - 安全事件模块",
+    "description": "XDR平台安全事件相关API接口，包括事件查询、处置、举证等功能",
+    "version": "1.0.0",
+    "contact": {
+      "name": "XDR API Support"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://{host}",
+      "description": "XDR平台服务器",
+      "variables": {
+        "host": {
+          "default": "xdr.example.com",
+          "description": "XDR平台主机地址"
+        }
+      }
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/api/xdr/v1/incidents/trends": {
+      "post": {
+        "tags": [
+          "incidents"
+        ],
+        "summary": "事件趋势图统计",
+        "description": "查询事件趋势图统计接口",
+        "operationId": "getIncidentTrends",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "startTimestamp",
+                  "endTimestamp",
+                  "timeField",
+                  "aggFuncs",
+                  "interval"
+                ],
+                "properties": {
+                  "startTimestamp": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "开始时间戳",
+                    "example": 1678710600
+                  },
+                  "endTimestamp": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "结束时间戳",
+                    "example": 1678710800
+                  },
+                  "timeField": {
+                    "type": "string",
+                    "description": "过滤的时间字段",
+                    "example": "occurTime"
+                  },
+                  "filterParam": {
+                    "type": "object",
+                    "properties": {
+                      "hostBranchIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer"
+                        },
+                        "description": "资产组，[]表示全部"
+                      },
+                      "severities": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer"
+                        },
+                        "description": "安全等级，0:信息,1:低危,2:中危,3:高危,4:严重"
+                      },
+                      "whiteStatus": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "加白状态"
+                      },
+                      "dealStatus": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer"
+                        },
+                        "description": "处置状态，1:待处置,2:处置中,3:处置完成,4:挂起,5:已忽略,6:已遏制"
+                      }
+                    }
+                  },
+                  "aggBy": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "分组字段"
+                  },
+                  "aggFuncs": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "description": "聚合结果名称"
+                        },
+                        "param": {
+                          "type": "string",
+                          "description": "聚合字段"
+                        }
+                      }
+                    },
+                    "description": "聚合操作"
+                  },
+                  "interval": {
+                    "type": "string",
+                    "description": "时间间隔，1m:分钟,1H:小时,1d:天,1M:月",
+                    "enum": [
+                      "1m",
+                      "1H",
+                      "1d",
+                      "1M"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "example": "Success"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "item": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "description": "曲线名"
+                              },
+                              "item": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "name": {
+                                      "type": "integer",
+                                      "description": "时间点"
+                                    },
+                                    "value": {
+                                      "type": "integer",
+                                      "description": "具体统计值"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT Token认证，在Header中添加Authorization: Bearer {token}"
+      }
+    }
+  }
+}

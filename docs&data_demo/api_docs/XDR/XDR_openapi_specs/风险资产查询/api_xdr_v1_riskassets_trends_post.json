@@ -1,0 +1,330 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "XDR平台API - 风险主机模块",
+    "description": "XDR平台风险主机相关API接口，包括风险主机趋势图和风险资产查询功能",
+    "version": "1.0.0",
+    "contact": {
+      "name": "XDR API Support"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://{host}",
+      "description": "XDR平台服务器",
+      "variables": {
+        "host": {
+          "default": "xdr.example.com",
+          "description": "XDR平台主机地址"
+        }
+      }
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/api/xdr/v1/riskassets/trends": {
+      "post": {
+        "tags": [
+          "risk-assets"
+        ],
+        "summary": "风险主机趋势图",
+        "description": "查询风险主机趋势图统计",
+        "operationId": "getRiskAssetsTrends",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "startTimestamp",
+                  "endTimestamp",
+                  "timeField",
+                  "aggFuncs",
+                  "interval"
+                ],
+                "properties": {
+                  "startTimestamp": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "起始时间戳"
+                  },
+                  "endTimestamp": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "结束时间戳"
+                  },
+                  "timeField": {
+                    "type": "string",
+                    "description": "过滤的时间字段",
+                    "enum": [
+                      "detectTime",
+                      "firstTime"
+                    ]
+                  },
+                  "filterParam": {
+                    "type": "object",
+                    "properties": {
+                      "severities": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer"
+                        },
+                        "description": "风险等级，0:信息,1:低危,2:中危,3:高危,4:严重"
+                      }
+                    }
+                  },
+                  "aggBy": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "分组字段"
+                  },
+                  "aggFuncs": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "name",
+                        "func",
+                        "param"
+                      ],
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "description": "聚合结果名称"
+                        },
+                        "func": {
+                          "type": "string",
+                          "description": "聚合操作名称",
+                          "enum": [
+                            "count"
+                          ]
+                        },
+                        "param": {
+                          "type": "string",
+                          "description": "聚合字段",
+                          "example": "_id"
+                        }
+                      }
+                    }
+                  },
+                  "interval": {
+                    "type": "string",
+                    "description": "时间间隔，目前数字部分仅支持1",
+                    "enum": [
+                      "1H",
+                      "1d"
+                    ]
+                  },
+                  "sort": {
+                    "type": "string",
+                    "description": "排序方法"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "example": "Success"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "成功"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "meta": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        },
+                        "item": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "description": "趋势图名称"
+                              },
+                              "trends": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "detectTime": {
+                                      "type": "integer",
+                                      "format": "int64",
+                                      "description": "时间字段"
+                                    },
+                                    "count": {
+                                      "type": "integer",
+                                      "description": "数量"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT Token认证，在Header中添加Authorization: Bearer {token}"
+      }
+    },
+    "schemas": {
+      "RiskAsset": {
+        "type": "object",
+        "properties": {
+          "hostAssetId": {
+            "type": "integer",
+            "description": "资产ID"
+          },
+          "hostIp": {
+            "type": "string",
+            "description": "影响资产"
+          },
+          "totalVulNumber": {
+            "type": "integer",
+            "description": "总漏洞数量"
+          },
+          "highlyExploitableVulNumber": {
+            "type": "integer",
+            "description": "高可利用漏洞数量"
+          },
+          "weakPasswordNumber": {
+            "type": "integer",
+            "description": "弱口令数量"
+          },
+          "incidentNumber": {
+            "type": "integer",
+            "description": "安全事件数量"
+          },
+          "riskTag": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "风险标签"
+          },
+          "incidentSeverityNumber": {
+            "type": "object",
+            "description": "安全事件等级数量",
+            "properties": {
+              "healthNumber": {
+                "type": "integer",
+                "description": "健康事件数量"
+              },
+              "lowNumber": {
+                "type": "integer",
+                "description": "低危事件数量"
+              },
+              "middleNumber": {
+                "type": "integer",
+                "description": "中危事件数量"
+              },
+              "highNumber": {
+                "type": "integer",
+                "description": "高危事件数量"
+              },
+              "criticalNumber": {
+                "type": "integer",
+                "description": "严重事件数量"
+              }
+            }
+          },
+          "severity": {
+            "type": "integer",
+            "description": "资产严重等级",
+            "enum": [
+              1,
+              2,
+              3,
+              4
+            ]
+          },
+          "detectTime": {
+            "type": "integer",
+            "format": "int64",
+            "description": "最近检测时间"
+          },
+          "lastSeen": {
+            "type": "integer",
+            "format": "int64",
+            "description": "最近上线时间"
+          },
+          "firstSeen": {
+            "type": "integer",
+            "format": "int64",
+            "description": "首次发现时间"
+          }
+        }
+      },
+      "TrendItem": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "趋势图名称"
+          },
+          "trends": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "detectTime": {
+                  "type": "integer",
+                  "format": "int64"
+                },
+                "count": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

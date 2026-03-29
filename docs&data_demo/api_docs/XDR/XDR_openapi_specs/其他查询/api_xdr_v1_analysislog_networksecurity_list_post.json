@@ -1,0 +1,350 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "XDR平台API - 安全告警模块(第二部分)",
+    "description": "XDR平台安全告警相关API接口，包括告警处置、查询、安全日志等功能",
+    "version": "1.0.0",
+    "contact": {
+      "name": "XDR API Support"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://{host}",
+      "description": "XDR平台服务器",
+      "variables": {
+        "host": {
+          "default": "xdr.example.com",
+          "description": "XDR平台主机地址"
+        }
+      }
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/api/xdr/v1/analysislog/networksecurity/list": {
+      "post": {
+        "tags": [
+          "security-log"
+        ],
+        "summary": "分页查询网络安全日志列表",
+        "description": "分页查询网络安全日志列表",
+        "operationId": "listNetworkSecurityLogs",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "page": {
+                    "type": "integer",
+                    "description": "页码",
+                    "default": 1
+                  },
+                  "pageSize": {
+                    "type": "integer",
+                    "description": "页大小",
+                    "default": 5
+                  },
+                  "startTimestamp": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "秒级开始时间戳"
+                  },
+                  "endTimestamp": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "秒级结束时间戳"
+                  },
+                  "productTypes": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "上报设备产品"
+                  },
+                  "accessDirections": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "description": "访问方向"
+                  },
+                  "threatClasses": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "威胁一级分类"
+                  },
+                  "threatTypes": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "威胁二级分类"
+                  },
+                  "threatSubTypes": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "威胁三级分类"
+                  },
+                  "srcIps": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "源IP"
+                  },
+                  "dstIps": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "目的IP"
+                  },
+                  "attackStates": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "description": "攻击状态"
+                  },
+                  "severities": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "description": "严重性"
+                  },
+                  "sortType": {
+                    "type": "string",
+                    "description": "排序类型",
+                    "enum": [
+                      "DESC",
+                      "ASC"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "example": "Success"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "请求成功"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "page": {
+                          "type": "integer"
+                        },
+                        "pageSize": {
+                          "type": "integer"
+                        },
+                        "item": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "sqlServerRequest": {
+                                "type": "string"
+                              },
+                              "recordTimestamp": {
+                                "type": "integer",
+                                "format": "int64"
+                              },
+                              "uploadTimestamp": {
+                                "type": "integer",
+                                "format": "int64"
+                              },
+                              "insertTimestamp": {
+                                "type": "integer",
+                                "format": "int64"
+                              },
+                              "vendor": {
+                                "type": "string"
+                              },
+                              "productType": {
+                                "type": "string"
+                              },
+                              "productVer": {
+                                "type": "string"
+                              },
+                              "manage": {
+                                "type": "string"
+                              },
+                              "manageIp": {
+                                "type": "string"
+                              },
+                              "originProductType": {
+                                "type": "string"
+                              },
+                              "originProductVer": {
+                                "type": "string"
+                              },
+                              "deviceId": {
+                                "type": "string"
+                              },
+                              "deviceIp": {
+                                "type": "string"
+                              },
+                              "cascadeType": {
+                                "type": "integer"
+                              },
+                              "uuId": {
+                                "type": "string"
+                              },
+                              "srcIp": {
+                                "type": "string"
+                              },
+                              "srcPort": {
+                                "type": "integer"
+                              },
+                              "srcMac": {
+                                "type": "string"
+                              },
+                              "srcIpTag": {
+                                "type": "integer"
+                              },
+                              "srcType": {
+                                "type": "integer"
+                              },
+                              "srcSubType": {
+                                "type": "integer"
+                              },
+                              "srcCountry": {
+                                "type": "string"
+                              },
+                              "srcProvince": {
+                                "type": "string"
+                              },
+                              "srcCity": {
+                                "type": "string"
+                              },
+                              "srcAssetId": {
+                                "type": "string"
+                              },
+                              "srcRegionId": {
+                                "type": "string"
+                              },
+                              "dstIp": {
+                                "type": "string"
+                              },
+                              "dstPort": {
+                                "type": "integer"
+                              },
+                              "dstMac": {
+                                "type": "string"
+                              },
+                              "dstIpTag": {
+                                "type": "integer"
+                              },
+                              "dstType": {
+                                "type": "integer"
+                              },
+                              "dstSubType": {
+                                "type": "integer"
+                              },
+                              "dstCountry": {
+                                "type": "string"
+                              },
+                              "dstProvince": {
+                                "type": "string"
+                              },
+                              "dstCity": {
+                                "type": "string"
+                              },
+                              "dstAssetId": {
+                                "type": "string"
+                              },
+                              "dstRegionId": {
+                                "type": "string"
+                              },
+                              "threatClass": {
+                                "type": "integer"
+                              },
+                              "threatType": {
+                                "type": "integer"
+                              },
+                              "threatSubType": {
+                                "type": "string"
+                              },
+                              "l7Protocol": {
+                                "type": "string"
+                              },
+                              "l4Protocol": {
+                                "type": "string"
+                              },
+                              "l3Protocol": {
+                                "type": "string"
+                              },
+                              "attackState": {
+                                "type": "integer"
+                              },
+                              "white": {
+                                "type": "integer"
+                              },
+                              "action": {
+                                "type": "integer"
+                              },
+                              "tactic": {
+                                "type": "string"
+                              },
+                              "technique": {
+                                "type": "string"
+                              },
+                              "severity": {
+                                "type": "integer"
+                              },
+                              "confidence": {
+                                "type": "integer"
+                              },
+                              "riskLevel": {
+                                "type": "integer"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT Token认证，在Header中添加Authorization: Bearer {token}"
+      }
+    }
+  }
+}

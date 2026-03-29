@@ -1,0 +1,126 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "XDR平台API - 安全事件模块",
+    "description": "XDR平台安全事件相关API接口，包括事件查询、处置、举证等功能",
+    "version": "1.0.0",
+    "contact": {
+      "name": "XDR API Support"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://{host}",
+      "description": "XDR平台服务器",
+      "variables": {
+        "host": {
+          "default": "xdr.example.com",
+          "description": "XDR平台主机地址"
+        }
+      }
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/api/xdr/v1/incidents/dealstatus": {
+      "post": {
+        "tags": [
+          "incidents"
+        ],
+        "summary": "批量修改安全事件处置接口",
+        "description": "批量修改安全事件的处置状态",
+        "operationId": "updateIncidentDealStatus",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "uuIds",
+                  "dealStatus"
+                ],
+                "properties": {
+                  "uuIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "事件ID列表(1-200个)",
+                    "minItems": 1,
+                    "maxItems": 200
+                  },
+                  "dealStatus": {
+                    "type": "integer",
+                    "description": "处置状态，0:待处置,10:处置中,40:已处置,50:已挂起,60:接受风险,70:已遏制",
+                    "enum": [
+                      0,
+                      10,
+                      40,
+                      50,
+                      60,
+                      70
+                    ]
+                  },
+                  "dealComment": {
+                    "type": "string",
+                    "description": "操作备注"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "example": "Success"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "修改处置状态成功"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "total": {
+                          "type": "integer",
+                          "description": "更新事件总数"
+                        },
+                        "succeededNum": {
+                          "type": "integer",
+                          "description": "更新成功事件数"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT Token认证，在Header中添加Authorization: Bearer {token}"
+      }
+    }
+  }
+}

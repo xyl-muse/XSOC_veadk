@@ -1,0 +1,361 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "XDR平台API - 风险主机模块",
+    "description": "XDR平台风险主机相关API接口，包括风险主机趋势图和风险资产查询功能",
+    "version": "1.0.0",
+    "contact": {
+      "name": "XDR API Support"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://{host}",
+      "description": "XDR平台服务器",
+      "variables": {
+        "host": {
+          "default": "xdr.example.com",
+          "description": "XDR平台主机地址"
+        }
+      }
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/api/xdr/v1/riskassets/list": {
+      "post": {
+        "tags": [
+          "risk-assets"
+        ],
+        "summary": "查询指定风险主机资产接口",
+        "description": "分页查询风险主机资产列表",
+        "operationId": "listRiskAssets",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "hostBranchIds"
+                ],
+                "properties": {
+                  "hostAssetIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "description": "资产ID集合，为空时查询全部"
+                  },
+                  "page": {
+                    "type": "integer",
+                    "description": "页码",
+                    "default": 1
+                  },
+                  "pageSize": {
+                    "type": "integer",
+                    "description": "页面大小",
+                    "default": 5
+                  },
+                  "startTimestamp": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "查询最近检测开始时间"
+                  },
+                  "endTimestamp": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "查询最近检测结束时间"
+                  },
+                  "sort": {
+                    "type": "string",
+                    "description": "排序规则，格式为'字段名:排序方式'，多个排序使用分号隔开"
+                  },
+                  "hostBranchIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "description": "资产组ID集合"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "example": "Success"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "成功"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "total": {
+                          "type": "integer",
+                          "description": "告警总数"
+                        },
+                        "page": {
+                          "type": "integer",
+                          "description": "页码"
+                        },
+                        "pageSize": {
+                          "type": "integer",
+                          "description": "页面大小"
+                        },
+                        "item": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "hostAssetId": {
+                                "type": "integer",
+                                "description": "资产ID"
+                              },
+                              "hostIp": {
+                                "type": "string",
+                                "description": "影响资产"
+                              },
+                              "totalVulNumber": {
+                                "type": "integer",
+                                "description": "总漏洞数量"
+                              },
+                              "highlyExploitableVulNumber": {
+                                "type": "integer",
+                                "description": "高可利用漏洞数量"
+                              },
+                              "weakPasswordNumber": {
+                                "type": "integer",
+                                "description": "弱口令数量"
+                              },
+                              "incidentNumber": {
+                                "type": "integer",
+                                "description": "安全事件数量"
+                              },
+                              "riskTag": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "description": "风险标签"
+                              },
+                              "incidentSeverityNumber": {
+                                "type": "object",
+                                "description": "安全事件等级数量",
+                                "properties": {
+                                  "healthNumber": {
+                                    "type": "integer",
+                                    "description": "健康事件数量"
+                                  },
+                                  "lowNumber": {
+                                    "type": "integer",
+                                    "description": "低危事件数量"
+                                  },
+                                  "middleNumber": {
+                                    "type": "integer",
+                                    "description": "中危事件数量"
+                                  },
+                                  "highNumber": {
+                                    "type": "integer",
+                                    "description": "高危事件数量"
+                                  },
+                                  "criticalNumber": {
+                                    "type": "integer",
+                                    "description": "严重事件数量"
+                                  }
+                                }
+                              },
+                              "severity": {
+                                "type": "integer",
+                                "description": "资产严重等级，1:低危,2:中危,3:高危,4:严重"
+                              },
+                              "detectTime": {
+                                "type": "integer",
+                                "format": "int64",
+                                "description": "最近检测时间"
+                              },
+                              "lastSeen": {
+                                "type": "integer",
+                                "format": "int64",
+                                "description": "最近上线时间"
+                              },
+                              "firstSeen": {
+                                "type": "integer",
+                                "format": "int64",
+                                "description": "首次发现时间"
+                              },
+                              "hostBranchId": {
+                                "type": "integer",
+                                "description": "资产组ID"
+                              },
+                              "branchName": {
+                                "type": "string",
+                                "description": "资产组名称"
+                              },
+                              "hostGroupIds": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer"
+                                },
+                                "description": "业务组ID集合"
+                              },
+                              "hostGroups": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "description": "业务组集合"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT Token认证，在Header中添加Authorization: Bearer {token}"
+      }
+    },
+    "schemas": {
+      "RiskAsset": {
+        "type": "object",
+        "properties": {
+          "hostAssetId": {
+            "type": "integer",
+            "description": "资产ID"
+          },
+          "hostIp": {
+            "type": "string",
+            "description": "影响资产"
+          },
+          "totalVulNumber": {
+            "type": "integer",
+            "description": "总漏洞数量"
+          },
+          "highlyExploitableVulNumber": {
+            "type": "integer",
+            "description": "高可利用漏洞数量"
+          },
+          "weakPasswordNumber": {
+            "type": "integer",
+            "description": "弱口令数量"
+          },
+          "incidentNumber": {
+            "type": "integer",
+            "description": "安全事件数量"
+          },
+          "riskTag": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "风险标签"
+          },
+          "incidentSeverityNumber": {
+            "type": "object",
+            "description": "安全事件等级数量",
+            "properties": {
+              "healthNumber": {
+                "type": "integer",
+                "description": "健康事件数量"
+              },
+              "lowNumber": {
+                "type": "integer",
+                "description": "低危事件数量"
+              },
+              "middleNumber": {
+                "type": "integer",
+                "description": "中危事件数量"
+              },
+              "highNumber": {
+                "type": "integer",
+                "description": "高危事件数量"
+              },
+              "criticalNumber": {
+                "type": "integer",
+                "description": "严重事件数量"
+              }
+            }
+          },
+          "severity": {
+            "type": "integer",
+            "description": "资产严重等级",
+            "enum": [
+              1,
+              2,
+              3,
+              4
+            ]
+          },
+          "detectTime": {
+            "type": "integer",
+            "format": "int64",
+            "description": "最近检测时间"
+          },
+          "lastSeen": {
+            "type": "integer",
+            "format": "int64",
+            "description": "最近上线时间"
+          },
+          "firstSeen": {
+            "type": "integer",
+            "format": "int64",
+            "description": "首次发现时间"
+          }
+        }
+      },
+      "TrendItem": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "趋势图名称"
+          },
+          "trends": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "detectTime": {
+                  "type": "integer",
+                  "format": "int64"
+                },
+                "count": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

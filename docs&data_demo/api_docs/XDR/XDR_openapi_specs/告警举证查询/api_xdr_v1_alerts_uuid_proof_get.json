@@ -1,0 +1,550 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "XDR平台API - 安全告警模块(第一部分)",
+    "description": "XDR平台安全告警相关API接口，包括告警聚合统计、ATT&CK信息查询、告警举证等功能",
+    "version": "1.0.0",
+    "contact": {
+      "name": "XDR API Support"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://{host}",
+      "description": "XDR平台服务器",
+      "variables": {
+        "host": {
+          "default": "xdr.example.com",
+          "description": "XDR平台主机地址"
+        }
+      }
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/api/xdr/v1/alerts/{uuid}/proof": {
+      "get": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "根据告警uuId获取举证信息",
+        "description": "获取指定安全告警的详细举证信息",
+        "operationId": "getAlertProof",
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "告警ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "example": "Success"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "成功"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "description": "告警名称"
+                        },
+                        "uuId": {
+                          "type": "string",
+                          "description": "告警ID"
+                        },
+                        "severity": {
+                          "type": "integer",
+                          "description": "告警等级"
+                        },
+                        "threatDefine": {
+                          "type": "array",
+                          "items": {
+                            "type": "integer"
+                          },
+                          "description": "告警定性"
+                        },
+                        "direction": {
+                          "type": "integer",
+                          "description": "访问方向"
+                        },
+                        "attackResult": {
+                          "type": "integer",
+                          "description": "攻击结果"
+                        },
+                        "threatSubTypeDesc": {
+                          "type": "string",
+                          "description": "告警三级分类"
+                        },
+                        "stage": {
+                          "type": "integer",
+                          "description": "告警阶段"
+                        },
+                        "engineName": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "检测引擎"
+                        },
+                        "logCount": {
+                          "type": "integer",
+                          "description": "命中日志数"
+                        },
+                        "lastTime": {
+                          "type": "integer",
+                          "format": "int64",
+                          "description": "最近发生时间"
+                        },
+                        "srcIp": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "源IP"
+                        },
+                        "srcPort": {
+                          "type": "array",
+                          "items": {
+                            "type": "integer"
+                          },
+                          "description": "源端口"
+                        },
+                        "dstIp": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "目的IP"
+                        },
+                        "dstPort": {
+                          "type": "array",
+                          "items": {
+                            "type": "integer"
+                          },
+                          "description": "目的端口"
+                        },
+                        "devSourceName": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "设备来源"
+                        },
+                        "dealStatus": {
+                          "type": "integer",
+                          "description": "处置状态"
+                        },
+                        "proofType": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "举证类型"
+                        },
+                        "proof": {
+                          "type": "object",
+                          "description": "举证详情，根据proofType取对应字段",
+                          "additionalProperties": true
+                        },
+                        "originalAlert": {
+                          "type": "object",
+                          "description": "E侧进程链原始告警举证",
+                          "properties": {
+                            "dataType": {
+                              "type": "string"
+                            },
+                            "engineName": {
+                              "type": "string"
+                            },
+                            "srcIp": {
+                              "type": "string"
+                            },
+                            "dstIp": {
+                              "type": "string"
+                            },
+                            "mitreIds": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "matchPros": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "domain": {
+                              "type": "string"
+                            },
+                            "vulInfo": {
+                              "type": "string"
+                            },
+                            "cve": {
+                              "type": "string"
+                            },
+                            "vulType": {
+                              "type": "string"
+                            },
+                            "appType": {
+                              "type": "string"
+                            },
+                            "languageType": {
+                              "type": "string"
+                            },
+                            "proto": {
+                              "type": "string"
+                            },
+                            "ruleName": {
+                              "type": "string"
+                            },
+                            "cmdLine": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "pid": {
+                              "type": "string"
+                            },
+                            "path": {
+                              "type": "string"
+                            },
+                            "regKey": {
+                              "type": "string"
+                            },
+                            "regValue": {
+                              "type": "string"
+                            },
+                            "fileMd5": {
+                              "type": "string"
+                            },
+                            "user": {
+                              "type": "string"
+                            },
+                            "taskFrequency": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "gptResult": {
+                          "type": "integer",
+                          "description": "GPT研判结论"
+                        },
+                        "gptResultDescription": {
+                          "type": "string",
+                          "description": "GPT研判结论中文描述"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT Token认证，在Header中添加Authorization: Bearer {token}"
+      }
+    },
+    "schemas": {
+      "ProofObject": {
+        "type": "object",
+        "description": "告警举证详情对象",
+        "properties": {
+          "fileId": {
+            "type": "string",
+            "description": "文件ID（file）"
+          },
+          "fileMd5": {
+            "type": "string",
+            "description": "文件MD5（file）"
+          },
+          "filePath": {
+            "type": "string",
+            "description": "文件路径（file）"
+          },
+          "fileSize": {
+            "type": "integer",
+            "description": "文件大小(KB)"
+          },
+          "fileCreateTime": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "fileClass": {
+            "type": "integer",
+            "description": "文件一级分类"
+          },
+          "fileStatus": {
+            "type": "integer",
+            "description": "文件信誉"
+          },
+          "fileSource": {
+            "type": "string"
+          },
+          "fileHash": {
+            "type": "string"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "fileTransProtocol": {
+            "type": "string"
+          },
+          "scanStartTime": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scanEndTime": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scanDuration": {
+            "type": "integer"
+          },
+          "scanType": {
+            "type": "integer"
+          },
+          "scanCount": {
+            "type": "integer"
+          },
+          "virusFamily": {
+            "type": "string"
+          },
+          "virusName": {
+            "type": "string"
+          },
+          "virusType": {
+            "type": "string"
+          },
+          "virusLibVersion": {
+            "type": "string"
+          },
+          "bfStartTime": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "bfEndTime": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "bfCount": {
+            "type": "integer"
+          },
+          "bfIpList": {
+            "type": "string"
+          },
+          "bfAccountList": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "bfDuration": {
+            "type": "integer"
+          },
+          "bfType": {
+            "type": "integer"
+          },
+          "bfProtocol": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "domain": {
+            "type": "string"
+          },
+          "webshellFindType": {
+            "type": "integer"
+          },
+          "webshellDomainRoot": {
+            "type": "string"
+          },
+          "rawProofData": {
+            "type": "string"
+          },
+          "requestHead": {
+            "type": "string"
+          },
+          "requestBody": {
+            "type": "string"
+          },
+          "responseHead": {
+            "type": "string"
+          },
+          "responseBody": {
+            "type": "string"
+          },
+          "dnsQueries": {
+            "type": "string"
+          },
+          "dnsQTypes": {
+            "type": "string"
+          },
+          "dnsAnswers": {
+            "type": "string"
+          },
+          "dnsLength": {
+            "type": "string"
+          },
+          "tcpStartState": {
+            "type": "integer"
+          },
+          "tcpSessionState": {
+            "type": "integer"
+          },
+          "tcpElapsedTime": {
+            "type": "integer"
+          },
+          "tcpUpLinkLength": {
+            "type": "integer"
+          },
+          "tcpUpPkts": {
+            "type": "integer"
+          },
+          "tcpDownLinkLength": {
+            "type": "integer"
+          },
+          "tcpDownPkts": {
+            "type": "integer"
+          },
+          "smbCommand": {
+            "type": "integer"
+          },
+          "smbVersion": {
+            "type": "integer"
+          },
+          "smbProcessId": {
+            "type": "integer"
+          },
+          "smbUserId": {
+            "type": "integer"
+          },
+          "smbArgument": {
+            "type": "string"
+          },
+          "smbUserName": {
+            "type": "string"
+          },
+          "smbStatus": {
+            "type": "integer"
+          },
+          "rdpTlsVersion": {
+            "type": "integer"
+          },
+          "rdpDownloadPkts": {
+            "type": "integer"
+          },
+          "rdpDownflowBits": {
+            "type": "integer"
+          },
+          "sshProtocolVersion": {
+            "type": "string"
+          },
+          "sshClientVersion": {
+            "type": "string"
+          },
+          "sshServerVersion": {
+            "type": "string"
+          },
+          "sshEncryptionAlg": {
+            "type": "string"
+          },
+          "sshMacAlg": {
+            "type": "string"
+          },
+          "sshCompressionAlg": {
+            "type": "string"
+          },
+          "sshHostKey": {
+            "type": "string"
+          },
+          "ldapName": {
+            "type": "string"
+          },
+          "ldapAuth": {
+            "type": "string"
+          },
+          "ldapEncType": {
+            "type": "string"
+          },
+          "ldapAuthType": {
+            "type": "string"
+          },
+          "ldapReplyCode": {
+            "type": "integer"
+          },
+          "ldapSuccess": {
+            "type": "boolean"
+          },
+          "loginUser": {
+            "type": "string"
+          },
+          "loginPassword": {
+            "type": "string"
+          },
+          "loginSuccess": {
+            "type": "boolean"
+          },
+          "loginReplyCode": {
+            "type": "integer"
+          },
+          "loginReplyMsg": {
+            "type": "string"
+          },
+          "loginType": {
+            "type": "string"
+          },
+          "userName": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "tiTag": {
+            "type": "string"
+          },
+          "tiType": {
+            "type": "string"
+          },
+          "tiIntelligence": {
+            "type": "string"
+          },
+          "packetData": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

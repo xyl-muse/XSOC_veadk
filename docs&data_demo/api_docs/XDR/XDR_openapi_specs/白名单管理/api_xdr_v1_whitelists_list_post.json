@@ -1,0 +1,372 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "XDR平台API - 白名单模块",
+    "description": "XDR平台白名单相关API接口，包括白名单的增删改查功能",
+    "version": "1.0.0",
+    "contact": {
+      "name": "XDR API Support"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://{host}",
+      "description": "XDR平台服务器",
+      "variables": {
+        "host": {
+          "default": "xdr.example.com",
+          "description": "XDR平台主机地址"
+        }
+      }
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/api/xdr/v1/whitelists/list": {
+      "post": {
+        "tags": [
+          "whitelists"
+        ],
+        "summary": "查询白名单列表信息",
+        "description": "分页查询白名单列表",
+        "operationId": "listWhitelists",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "pageSize",
+                  "page"
+                ],
+                "properties": {
+                  "keyword": {
+                    "type": "string",
+                    "description": "模糊查询值"
+                  },
+                  "pageSize": {
+                    "type": "integer",
+                    "description": "分页大小"
+                  },
+                  "page": {
+                    "type": "integer",
+                    "description": "页码"
+                  },
+                  "order": {
+                    "type": "string",
+                    "description": "排序方式",
+                    "enum": [
+                      "desc",
+                      "asc"
+                    ]
+                  },
+                  "sortKey": {
+                    "type": "string",
+                    "description": "排序字段",
+                    "enum": [
+                      "createTime"
+                    ]
+                  },
+                  "threatSubTypeIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "攻击子类型"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "example": "Success"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "成功"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "total": {
+                          "type": "integer",
+                          "description": "白名单总数"
+                        },
+                        "pageSize": {
+                          "type": "integer",
+                          "description": "分页大小"
+                        },
+                        "page": {
+                          "type": "integer",
+                          "description": "页码"
+                        },
+                        "item": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "whiteId": {
+                                "type": "string",
+                                "description": "白名单ID"
+                              },
+                              "name": {
+                                "type": "string",
+                                "description": "规则名称"
+                              },
+                              "threatSubTypeList": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "threatSubTypeId": {
+                                      "type": "string",
+                                      "description": "攻击子类ID"
+                                    },
+                                    "threatSubTypeView": {
+                                      "type": "string",
+                                      "description": "攻击子类名称"
+                                    }
+                                  }
+                                }
+                              },
+                              "ruleList": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "description": "匹配字段"
+                                    },
+                                    "mode": {
+                                      "type": "string",
+                                      "description": "匹配方式"
+                                    },
+                                    "view": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string"
+                                      },
+                                      "description": "匹配值"
+                                    },
+                                    "isIgnoreCase": {
+                                      "type": "boolean",
+                                      "description": "是否忽略大小写"
+                                    }
+                                  }
+                                }
+                              },
+                              "hostIp": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "description": "生效主机"
+                              },
+                              "isHostAll": {
+                                "type": "boolean",
+                                "description": "是否选择全部生效主机"
+                              },
+                              "isUnlimited": {
+                                "type": "integer",
+                                "description": "是否永久生效"
+                              },
+                              "timeRange": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "description": "生效时长"
+                              },
+                              "status": {
+                                "type": "string",
+                                "description": "启用状态"
+                              },
+                              "reason": {
+                                "type": "string",
+                                "description": "备注"
+                              },
+                              "creator": {
+                                "type": "string",
+                                "description": "创建人"
+                              },
+                              "updateTime": {
+                                "type": "integer",
+                                "format": "int64",
+                                "description": "最近修改时间"
+                              },
+                              "createTime": {
+                                "type": "integer",
+                                "format": "int64",
+                                "description": "创建时间"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "example": "InvalidParameter"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "param alertType illegal;"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT Token认证，在Header中添加Authorization: Bearer {token}"
+      }
+    },
+    "schemas": {
+      "WhitelistRule": {
+        "type": "object",
+        "required": [
+          "type",
+          "mode",
+          "view",
+          "isIgnorecase"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "匹配字段",
+            "enum": [
+              "alertEngine",
+              "alertRuleId",
+              "attackState",
+              "attckSubTechnique",
+              "bfAccountList",
+              "confidence",
+              "domain",
+              "domainAndUrl",
+              "dstIp",
+              "dstPort",
+              "exploitCveId",
+              "fileMd5",
+              "fileName",
+              "filePath",
+              "otherCmdLine",
+              "otherPath",
+              "parentCmdLine",
+              "parentPath",
+              "payload",
+              "productType",
+              "recipient",
+              "requestBody",
+              "requestHead",
+              "respStatus",
+              "responseBody",
+              "responseHead",
+              "riskTag",
+              "ruleIds",
+              "srcIp",
+              "srcPort",
+              "url",
+              "xForwardedFor",
+              "pName",
+              "hostIp"
+            ]
+          },
+          "mode": {
+            "type": "string",
+            "description": "匹配方式",
+            "enum": [
+              "in",
+              "=",
+              "like"
+            ]
+          },
+          "view": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "匹配值"
+          },
+          "isIgnorecase": {
+            "type": "boolean",
+            "description": "是否忽略大小写"
+          }
+        }
+      },
+      "ThreatSubType": {
+        "type": "object",
+        "properties": {
+          "threatSubTypeId": {
+            "type": "string",
+            "description": "攻击子类ID",
+            "enum": [
+              "94",
+              "214",
+              "201",
+              "215",
+              "90",
+              "203",
+              "204",
+              "205",
+              "96",
+              "10",
+              "207",
+              "30",
+              "208",
+              "213",
+              "40",
+              "209",
+              "212",
+              "218",
+              "216",
+              "217",
+              "-1",
+              "all"
+            ]
+          },
+          "threatSubTypeView": {
+            "type": "string",
+            "description": "攻击子类名称"
+          }
+        }
+      }
+    }
+  }
+}

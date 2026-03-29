@@ -1,0 +1,610 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "XDR平台API - 安全告警模块(第一部分)",
+    "description": "XDR平台安全告警相关API接口，包括告警聚合统计、ATT&CK信息查询、告警举证等功能",
+    "version": "1.0.0",
+    "contact": {
+      "name": "XDR API Support"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://{host}",
+      "description": "XDR平台服务器",
+      "variables": {
+        "host": {
+          "default": "xdr.example.com",
+          "description": "XDR平台主机地址"
+        }
+      }
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/api/xdr/v1/alerts/aggregation": {
+      "post": {
+        "tags": [
+          "alerts-stats"
+        ],
+        "summary": "告警聚合通用API",
+        "description": "告警聚合统计通用接口",
+        "operationId": "aggregateAlerts",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "startTimestamp",
+                  "endTimestamp",
+                  "timeField",
+                  "aggFuncs"
+                ],
+                "properties": {
+                  "startTimestamp": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "起始时间戳"
+                  },
+                  "endTimestamp": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "结束时间戳"
+                  },
+                  "timeField": {
+                    "type": "string",
+                    "description": "过滤的时间字段"
+                  },
+                  "filterParam": {
+                    "type": "object",
+                    "properties": {
+                      "alertDealStatus": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer"
+                        },
+                        "description": "处置状态，1:待处置,2:处置中,3:处置完成"
+                      },
+                      "alertDealActions": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "处置动作"
+                      },
+                      "accessDirections": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer"
+                        },
+                        "description": "访问方向"
+                      },
+                      "hostBranchIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer"
+                        },
+                        "description": "资产组"
+                      },
+                      "threatDefines": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer"
+                        },
+                        "description": "告警定性"
+                      },
+                      "hostBusinessIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer"
+                        },
+                        "description": "所属业务"
+                      },
+                      "alarmClassifications": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "告警分类"
+                      },
+                      "severities": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer"
+                        },
+                        "description": "告警等级"
+                      },
+                      "read": {
+                        "type": "boolean",
+                        "description": "告警是否已读"
+                      },
+                      "whiteStatus": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "告警加白字段"
+                      },
+                      "manages": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "上报设备ID"
+                      },
+                      "devUIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer"
+                        },
+                        "description": "数据源-原始"
+                      },
+                      "attackResults": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer"
+                        },
+                        "description": "攻击结果"
+                      },
+                      "srcCountryNames": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "攻击源"
+                      },
+                      "srcProvinceName": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "省份"
+                      },
+                      "dstIpsClassify1idList": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "目的IP资产类型"
+                      }
+                    }
+                  },
+                  "excludeParam": {
+                    "type": "object",
+                    "properties": {
+                      "manages": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "排除上报设备ID"
+                      },
+                      "srcCountryNames": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "排除攻击源"
+                      },
+                      "proofType": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "排除协议类型"
+                      },
+                      "columns": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "不存在某些字段的数据"
+                      },
+                      "alertDealActions": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "排除处置动作"
+                      }
+                    }
+                  },
+                  "aggBy": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "分组字段"
+                  },
+                  "aggByAlias": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "分组别名"
+                  },
+                  "aggFuncs": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "description": "聚合结果名称"
+                        },
+                        "func": {
+                          "type": "string",
+                          "description": "聚合操作名称"
+                        },
+                        "param": {
+                          "type": "string",
+                          "description": "聚合字段"
+                        }
+                      }
+                    }
+                  },
+                  "sort": {
+                    "type": "string",
+                    "description": "排序方法"
+                  },
+                  "limit": {
+                    "type": "integer",
+                    "description": "TOP数量"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "example": "Success"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "成功"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "meta": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        },
+                        "item": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "description": "分组字段"
+                              },
+                              "count": {
+                                "type": "integer",
+                                "description": "统计值"
+                              },
+                              "branchName": {
+                                "type": "string",
+                                "description": "资产名称"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT Token认证，在Header中添加Authorization: Bearer {token}"
+      }
+    },
+    "schemas": {
+      "ProofObject": {
+        "type": "object",
+        "description": "告警举证详情对象",
+        "properties": {
+          "fileId": {
+            "type": "string",
+            "description": "文件ID（file）"
+          },
+          "fileMd5": {
+            "type": "string",
+            "description": "文件MD5（file）"
+          },
+          "filePath": {
+            "type": "string",
+            "description": "文件路径（file）"
+          },
+          "fileSize": {
+            "type": "integer",
+            "description": "文件大小(KB)"
+          },
+          "fileCreateTime": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "fileClass": {
+            "type": "integer",
+            "description": "文件一级分类"
+          },
+          "fileStatus": {
+            "type": "integer",
+            "description": "文件信誉"
+          },
+          "fileSource": {
+            "type": "string"
+          },
+          "fileHash": {
+            "type": "string"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "fileTransProtocol": {
+            "type": "string"
+          },
+          "scanStartTime": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scanEndTime": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scanDuration": {
+            "type": "integer"
+          },
+          "scanType": {
+            "type": "integer"
+          },
+          "scanCount": {
+            "type": "integer"
+          },
+          "virusFamily": {
+            "type": "string"
+          },
+          "virusName": {
+            "type": "string"
+          },
+          "virusType": {
+            "type": "string"
+          },
+          "virusLibVersion": {
+            "type": "string"
+          },
+          "bfStartTime": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "bfEndTime": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "bfCount": {
+            "type": "integer"
+          },
+          "bfIpList": {
+            "type": "string"
+          },
+          "bfAccountList": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "bfDuration": {
+            "type": "integer"
+          },
+          "bfType": {
+            "type": "integer"
+          },
+          "bfProtocol": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "domain": {
+            "type": "string"
+          },
+          "webshellFindType": {
+            "type": "integer"
+          },
+          "webshellDomainRoot": {
+            "type": "string"
+          },
+          "rawProofData": {
+            "type": "string"
+          },
+          "requestHead": {
+            "type": "string"
+          },
+          "requestBody": {
+            "type": "string"
+          },
+          "responseHead": {
+            "type": "string"
+          },
+          "responseBody": {
+            "type": "string"
+          },
+          "dnsQueries": {
+            "type": "string"
+          },
+          "dnsQTypes": {
+            "type": "string"
+          },
+          "dnsAnswers": {
+            "type": "string"
+          },
+          "dnsLength": {
+            "type": "string"
+          },
+          "tcpStartState": {
+            "type": "integer"
+          },
+          "tcpSessionState": {
+            "type": "integer"
+          },
+          "tcpElapsedTime": {
+            "type": "integer"
+          },
+          "tcpUpLinkLength": {
+            "type": "integer"
+          },
+          "tcpUpPkts": {
+            "type": "integer"
+          },
+          "tcpDownLinkLength": {
+            "type": "integer"
+          },
+          "tcpDownPkts": {
+            "type": "integer"
+          },
+          "smbCommand": {
+            "type": "integer"
+          },
+          "smbVersion": {
+            "type": "integer"
+          },
+          "smbProcessId": {
+            "type": "integer"
+          },
+          "smbUserId": {
+            "type": "integer"
+          },
+          "smbArgument": {
+            "type": "string"
+          },
+          "smbUserName": {
+            "type": "string"
+          },
+          "smbStatus": {
+            "type": "integer"
+          },
+          "rdpTlsVersion": {
+            "type": "integer"
+          },
+          "rdpDownloadPkts": {
+            "type": "integer"
+          },
+          "rdpDownflowBits": {
+            "type": "integer"
+          },
+          "sshProtocolVersion": {
+            "type": "string"
+          },
+          "sshClientVersion": {
+            "type": "string"
+          },
+          "sshServerVersion": {
+            "type": "string"
+          },
+          "sshEncryptionAlg": {
+            "type": "string"
+          },
+          "sshMacAlg": {
+            "type": "string"
+          },
+          "sshCompressionAlg": {
+            "type": "string"
+          },
+          "sshHostKey": {
+            "type": "string"
+          },
+          "ldapName": {
+            "type": "string"
+          },
+          "ldapAuth": {
+            "type": "string"
+          },
+          "ldapEncType": {
+            "type": "string"
+          },
+          "ldapAuthType": {
+            "type": "string"
+          },
+          "ldapReplyCode": {
+            "type": "integer"
+          },
+          "ldapSuccess": {
+            "type": "boolean"
+          },
+          "loginUser": {
+            "type": "string"
+          },
+          "loginPassword": {
+            "type": "string"
+          },
+          "loginSuccess": {
+            "type": "boolean"
+          },
+          "loginReplyCode": {
+            "type": "integer"
+          },
+          "loginReplyMsg": {
+            "type": "string"
+          },
+          "loginType": {
+            "type": "string"
+          },
+          "userName": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "tiTag": {
+            "type": "string"
+          },
+          "tiType": {
+            "type": "string"
+          },
+          "tiIntelligence": {
+            "type": "string"
+          },
+          "packetData": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,237 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "XDR平台API - 安全事件模块",
+    "description": "XDR平台安全事件相关API接口，包括事件查询、处置、举证等功能",
+    "version": "1.0.0",
+    "contact": {
+      "name": "XDR API Support"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://{host}",
+      "description": "XDR平台服务器",
+      "variables": {
+        "host": {
+          "default": "xdr.example.com",
+          "description": "XDR平台主机地址"
+        }
+      }
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/api/xdr/v1/incidents/aggregation": {
+      "post": {
+        "tags": [
+          "incidents"
+        ],
+        "summary": "事件聚合通用API",
+        "description": "事件聚合统计通用接口",
+        "operationId": "aggregateIncidents",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "startTimestamp",
+                  "endTimestamp",
+                  "timeField",
+                  "aggFuncs"
+                ],
+                "properties": {
+                  "startTimestamp": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "起始时间戳"
+                  },
+                  "endTimestamp": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "结束时间戳"
+                  },
+                  "timeField": {
+                    "type": "string",
+                    "description": "过滤的时间字段"
+                  },
+                  "filterParam": {
+                    "type": "object",
+                    "properties": {
+                      "severities": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer"
+                        },
+                        "description": "安全等级"
+                      },
+                      "dealStatus": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer"
+                        },
+                        "description": "处置状态"
+                      },
+                      "hostBranchIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer"
+                        },
+                        "description": "资产组"
+                      },
+                      "hostBusinessIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer"
+                        },
+                        "description": "所属业务"
+                      },
+                      "whiteStatus": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "加白状态"
+                      },
+                      "manages": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "上报设备ID"
+                      },
+                      "incidentThreatClass": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "安全事件一级分类"
+                      }
+                    }
+                  },
+                  "excludeParam": {
+                    "type": "object",
+                    "properties": {
+                      "manages": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "排除上报设备ID"
+                      }
+                    }
+                  },
+                  "aggBy": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "分组字段"
+                  },
+                  "aggByAlias": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "分组别名"
+                  },
+                  "aggFuncs": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "description": "聚合结果名称"
+                        },
+                        "func": {
+                          "type": "string",
+                          "description": "聚合操作名称"
+                        },
+                        "param": {
+                          "type": "string",
+                          "description": "聚合字段"
+                        }
+                      }
+                    }
+                  },
+                  "sort": {
+                    "type": "string",
+                    "description": "排序方法"
+                  },
+                  "limit": {
+                    "type": "integer",
+                    "description": "TOP数量"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "example": "Success"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "meta": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        },
+                        "item": {
+                          "type": "array",
+                          "items": {
+                            "type": "object"
+                          }
+                        }
+                      }
+                    },
+                    "total": {
+                      "type": "string",
+                      "description": "聚合字段类别数量"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT Token认证，在Header中添加Authorization: Bearer {token}"
+      }
+    }
+  }
+}

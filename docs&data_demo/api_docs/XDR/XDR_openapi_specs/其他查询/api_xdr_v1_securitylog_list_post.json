@@ -1,0 +1,330 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "XDR平台API - 安全告警模块(第二部分)",
+    "description": "XDR平台安全告警相关API接口，包括告警处置、查询、安全日志等功能",
+    "version": "1.0.0",
+    "contact": {
+      "name": "XDR API Support"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://{host}",
+      "description": "XDR平台服务器",
+      "variables": {
+        "host": {
+          "default": "xdr.example.com",
+          "description": "XDR平台主机地址"
+        }
+      }
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/api/xdr/v1/securitylog/list": {
+      "post": {
+        "tags": [
+          "security-log"
+        ],
+        "summary": "批量查询安全日志",
+        "description": "批量查询安全日志列表",
+        "operationId": "listSecurityLogs",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "uuIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "日志ID列表"
+                  },
+                  "startTimestamp": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "开始时间"
+                  },
+                  "endTimestamp": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "结束时间"
+                  },
+                  "timeField": {
+                    "type": "string",
+                    "description": "时间字段",
+                    "enum": [
+                      "recordTimestamp",
+                      "uploadTimestamp",
+                      "insertTimestamp"
+                    ]
+                  },
+                  "excludeManages": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "上报设备ID"
+                  },
+                  "actions": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "description": "动作，0:未知,1:允许,2:拒绝,3:监控"
+                  },
+                  "sortField": {
+                    "type": "string",
+                    "description": "排序参数"
+                  },
+                  "page": {
+                    "type": "integer",
+                    "description": "页码",
+                    "default": 1
+                  },
+                  "pageSize": {
+                    "type": "integer",
+                    "description": "每页大小",
+                    "default": 10
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "page": {
+                          "type": "integer"
+                        },
+                        "pageSize": {
+                          "type": "integer"
+                        },
+                        "total": {
+                          "type": "integer"
+                        },
+                        "item": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "recordTimestamp": {
+                                "type": "integer",
+                                "format": "int64",
+                                "description": "记录时间"
+                              },
+                              "uuId": {
+                                "type": "string",
+                                "description": "日志ID"
+                              },
+                              "url": {
+                                "type": "string",
+                                "description": "URL"
+                              },
+                              "action": {
+                                "type": "string",
+                                "description": "动作"
+                              },
+                              "vendor": {
+                                "type": "string",
+                                "description": "上报设备厂商"
+                              },
+                              "productVer": {
+                                "type": "string",
+                                "description": "上报设备版本"
+                              },
+                              "originProductType": {
+                                "type": "string",
+                                "description": "采集设备"
+                              },
+                              "originProductVer": {
+                                "type": "string",
+                                "description": "采集设备版本"
+                              },
+                              "deviceId": {
+                                "type": "string",
+                                "description": "采集设备ID"
+                              },
+                              "deviceIp": {
+                                "type": "string",
+                                "description": "采集设备IP"
+                              },
+                              "srcType": {
+                                "type": "string",
+                                "description": "源资产一级分类"
+                              },
+                              "srcSubType": {
+                                "type": "string",
+                                "description": "源资产二级分类"
+                              },
+                              "srcCountry": {
+                                "type": "string",
+                                "description": "源国家"
+                              },
+                              "srcProvince": {
+                                "type": "string",
+                                "description": "源省份"
+                              },
+                              "srcCity": {
+                                "type": "string",
+                                "description": "源城市"
+                              },
+                              "dstType": {
+                                "type": "string",
+                                "description": "目的资产一级分类"
+                              },
+                              "dstSubType": {
+                                "type": "string",
+                                "description": "目的资产二级分类"
+                              },
+                              "dstCountry": {
+                                "type": "string",
+                                "description": "目的国家"
+                              },
+                              "dstProvince": {
+                                "type": "string",
+                                "description": "目的省份"
+                              },
+                              "dstCity": {
+                                "type": "string",
+                                "description": "目的城市"
+                              },
+                              "l3Protocol": {
+                                "type": "string",
+                                "description": "3层协议"
+                              },
+                              "l4Protocol": {
+                                "type": "string",
+                                "description": "4层协议"
+                              },
+                              "tactic": {
+                                "type": "string",
+                                "description": "战术"
+                              },
+                              "technique": {
+                                "type": "string",
+                                "description": "技术"
+                              },
+                              "reqRuleId": {
+                                "type": "string",
+                                "description": "规则ID"
+                              },
+                              "ruleName": {
+                                "type": "string",
+                                "description": "规则名称"
+                              },
+                              "srcIp": {
+                                "type": "string",
+                                "description": "源IP"
+                              },
+                              "srcPort": {
+                                "type": "integer",
+                                "description": "源端口"
+                              },
+                              "dstIp": {
+                                "type": "string",
+                                "description": "目的IP"
+                              },
+                              "dstPort": {
+                                "type": "integer",
+                                "description": "目的端口"
+                              },
+                              "threatClass": {
+                                "type": "integer",
+                                "description": "威胁一级分类"
+                              },
+                              "threatType": {
+                                "type": "integer",
+                                "description": "威胁二级分类"
+                              },
+                              "threatSubType": {
+                                "type": "string",
+                                "description": "威胁三级分类"
+                              },
+                              "l7Protocol": {
+                                "type": "string",
+                                "description": "7层协议"
+                              },
+                              "attackState": {
+                                "type": "integer",
+                                "description": "攻击状态"
+                              },
+                              "severity": {
+                                "type": "integer",
+                                "description": "严重性"
+                              },
+                              "productType": {
+                                "type": "string",
+                                "description": "上报设备"
+                              },
+                              "manage": {
+                                "type": "string",
+                                "description": "上报设备ID"
+                              },
+                              "manageIp": {
+                                "type": "string",
+                                "description": "上报设备IP"
+                              },
+                              "confidence": {
+                                "type": "integer",
+                                "description": "置信度"
+                              },
+                              "riskLevel": {
+                                "type": "integer",
+                                "description": "风险等级"
+                              },
+                              "proofType": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "description": "举证类型"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT Token认证，在Header中添加Authorization: Bearer {token}"
+      }
+    }
+  }
+}

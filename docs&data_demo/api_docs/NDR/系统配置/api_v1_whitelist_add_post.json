@@ -1,0 +1,3564 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "NDR(流量监测-TDP) API接口",
+    "description": "NDR(流量监测，产品名称TDP)API接口文档。支持通过API调用的方式实现平台的数据获取、策略设置、平台配置功能，可与第三方平台联动，更好地完成安全管理闭环。",
+    "version": "1.0.0",
+    "contact": {
+      "name": "TDP API Support"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://domain",
+      "description": "TDP API服务器"
+    }
+  ],
+  "security": [
+    {
+      "ApiKeyAuth": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "query",
+        "name": "api_key",
+        "description": "API认证机制说明：\n1. ApiKey：唯一标识请求方身份，明文携带在http请求参数中\n2. Secret：请求方密钥，仅在签名和校验中使用\n3. Timestamp：请求发起的时间戳，防止重放攻击\n4. Sign：签名，计算方式：Base64.encodeBase64URLSafeString(HmacSHA256(ApiKey+Timestamp, Secret))"
+      }
+    },
+    "parameters": {
+      "ApiKey": {
+        "name": "api_key",
+        "in": "query",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "description": "分配给请求来源的APIKey",
+        "example": "6ba877dfc14e431e842cdc5a77482506"
+      },
+      "AuthTimestamp": {
+        "name": "auth_timestamp",
+        "in": "query",
+        "required": true,
+        "schema": {
+          "type": "integer"
+        },
+        "description": "请求时间戳",
+        "example": 1669570613
+      },
+      "Sign": {
+        "name": "sign",
+        "in": "query",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "description": "请求签名信息",
+        "example": "61odmT9jXxcMTp8sko3KzI2Qu77zrjp0wiy8l6IYomc"
+      }
+    },
+    "schemas": {
+      "CommonResponse": {
+        "type": "object",
+        "properties": {
+          "response_code": {
+            "type": "integer",
+            "description": "HTTP响应码，0-成功，-1：一般错误",
+            "example": 0
+          },
+          "verbose_msg": {
+            "type": "string",
+            "description": "返回信息，错误返回时会携带错误信息",
+            "example": "OK"
+          }
+        },
+        "required": [
+          "response_code"
+        ]
+      },
+      "TimeRangeWithAssetsGroupRequest": {
+        "type": "object",
+        "properties": {
+          "time_from": {
+            "type": "integer",
+            "description": "开始时间戳"
+          },
+          "time_to": {
+            "type": "integer",
+            "description": "截止时间戳"
+          },
+          "assets_group": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "description": "业务组"
+          }
+        },
+        "required": [
+          "time_from",
+          "time_to"
+        ]
+      },
+      "AssetsGroupRequest": {
+        "type": "object",
+        "properties": {
+          "assets_group": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "description": "业务组"
+          }
+        }
+      },
+      "DashboardStatusResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "config_flow": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "description": "网卡名称"
+                    },
+                    "value": {
+                      "type": "integer",
+                      "description": "流量值"
+                    },
+                    "desc": {
+                      "type": "string",
+                      "description": "流量描述"
+                    }
+                  }
+                },
+                "description": "已接流量的网卡信息"
+              },
+              "config_syslog": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "已接日志数"
+              },
+              "agent_count": {
+                "type": "integer",
+                "description": "已接入Agent数"
+              },
+              "func_count": {
+                "type": "integer",
+                "description": "开启的检测功能数"
+              },
+              "func_list": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "description": "功能名称"
+                    },
+                    "value": {
+                      "type": "integer",
+                      "description": "功能状态"
+                    }
+                  }
+                },
+                "description": "开启的检测功能列表"
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          },
+          "verbose_msg": {
+            "type": "string"
+          }
+        }
+      },
+      "DashboardBlockResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "aside_block_enabled": {
+                "type": "boolean",
+                "description": "旁路阻断状态"
+              },
+              "aside_block_ip_count": {
+                "type": "integer",
+                "description": "旁路阻断ip数量"
+              },
+              "linkage_block_enabled": {
+                "type": "boolean",
+                "description": "联动阻断状态"
+              },
+              "in_linkage_block_firewall_count": {
+                "type": "integer",
+                "description": "联动阻断入站数"
+              },
+              "out_linkage_block_firewall_count": {
+                "type": "integer",
+                "description": "联动阻断出站数"
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "DashboardSecurityResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "level": {
+                "type": "string",
+                "description": "安全级别,SUSPICIOUS-信息 LOW-低危 MEDIUM-中危 HIGH-高危 CRITICAL-严重",
+                "enum": [
+                  "SUSPICIOUS",
+                  "LOW",
+                  "MEDIUM",
+                  "HIGH",
+                  "CRITICAL"
+                ]
+              },
+              "compromised_host_count": {
+                "type": "integer",
+                "description": "待处理失陷主机数"
+              },
+              "unhandled_host_count": {
+                "type": "integer",
+                "description": "全部待处理主机数"
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "DashboardThreatenEventResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "external_attack_count": {
+                "type": "integer",
+                "description": "外部攻击事件数"
+              },
+              "lateral_attack_count": {
+                "type": "integer",
+                "description": "内网渗透事件数"
+              },
+              "remote_connect_count": {
+                "type": "integer",
+                "description": "远控连接事件数"
+              },
+              "target_attack_count": {
+                "type": "integer",
+                "description": "针对性攻击事件数"
+              },
+              "out_attack_count": {
+                "type": "integer",
+                "description": "对外攻击事件数"
+              },
+              "alert_count": {
+                "type": "integer",
+                "description": "告警数"
+              },
+              "alert_trends": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "time_from": {
+                      "type": "integer",
+                      "description": "趋势图中某一天开始时间"
+                    },
+                    "time_from_desc": {
+                      "type": "string",
+                      "description": "趋势图中某一天开始时间描述"
+                    },
+                    "time_to": {
+                      "type": "integer",
+                      "description": "趋势图中某一天结束时间"
+                    },
+                    "time_to_desc": {
+                      "type": "string",
+                      "description": "趋势图中某一天结束时间描述"
+                    },
+                    "alert_count": {
+                      "type": "integer",
+                      "description": "趋势图中某一天告警数"
+                    },
+                    "attack_count": {
+                      "type": "integer",
+                      "description": "趋势图中某一天攻击数"
+                    },
+                    "risk_count": {
+                      "type": "integer",
+                      "description": "趋势图中某一天风险数"
+                    }
+                  }
+                },
+                "description": "告警趋势"
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "DashboardThreatTopicResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "专题名"
+                },
+                "type": {
+                  "type": "string",
+                  "description": "类型 vulnerability、mining、webshell、apt、vul_0day"
+                },
+                "affected_asset_count": {
+                  "type": "integer",
+                  "description": "影响资产数"
+                },
+                "apt_event_count": {
+                  "type": "integer",
+                  "description": "APT数"
+                },
+                "attacked_successfully_asset_count": {
+                  "type": "integer",
+                  "description": "被攻击成功资产数"
+                },
+                "attack_event_count": {
+                  "type": "integer",
+                  "description": "攻击事件数"
+                },
+                "vulnerability_support_count": {
+                  "type": "integer",
+                  "description": "支持检测的漏洞数"
+                }
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "DashboardThreatTopicNewResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "webshell": {
+                "type": "object",
+                "properties": {
+                  "attacked_successfully_asset_count": {
+                    "type": "integer",
+                    "description": "被攻击成功资产数"
+                  }
+                },
+                "description": "Webshell相关数据"
+              },
+              "mining": {
+                "type": "object",
+                "properties": {
+                  "attacked_successfully_asset_count": {
+                    "type": "integer",
+                    "description": "矿池连接数"
+                  },
+                  "attacked_successfully_asset_unhandled_count": {
+                    "type": "integer",
+                    "description": "未处理的矿池连接数"
+                  },
+                  "block_attacked_successfully_asset_count": {
+                    "type": "integer",
+                    "description": "已防护被攻击成功资产数"
+                  }
+                },
+                "description": "挖矿相关数据"
+              },
+              "vul_0day": {
+                "type": "object",
+                "properties": {
+                  "attack_event_count": {
+                    "type": "integer",
+                    "description": "攻击事件数"
+                  },
+                  "block_attack_event_count": {
+                    "type": "integer",
+                    "description": "已阻断攻击事件数"
+                  },
+                  "vulnerability_support_count": {
+                    "type": "integer",
+                    "description": "支持检测的漏洞数"
+                  }
+                },
+                "description": "0day相关数据"
+              },
+              "apt": {
+                "type": "object",
+                "properties": {
+                  "apt_event_count": {
+                    "type": "integer",
+                    "description": "APT事件数"
+                  },
+                  "block_apt_event_count": {
+                    "type": "integer",
+                    "description": "阻断APT事件数"
+                  }
+                },
+                "description": "APT相关数据"
+              },
+              "cybercrime": {
+                "type": "object",
+                "properties": {
+                  "count": {
+                    "type": "integer",
+                    "description": "涉及到黑产团伙的事件数"
+                  }
+                },
+                "description": "黑产团伙相关数据"
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "DashboardAttackAssetsResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "description": "类型：assets_all-全部, assets_public-对外开放, assets_new-新上线"
+              },
+              "service_count": {
+                "type": "integer",
+                "description": "服务数"
+              },
+              "machine_count": {
+                "type": "integer",
+                "description": "主机数"
+              },
+              "domain_count": {
+                "type": "integer",
+                "description": "域名数"
+              },
+              "application_count": {
+                "type": "integer",
+                "description": "应用数"
+              },
+              "login_count": {
+                "type": "integer",
+                "description": "登录入口数"
+              },
+              "upload_count": {
+                "type": "integer",
+                "description": "上传接口数"
+              },
+              "api_count": {
+                "type": "integer",
+                "description": "api数"
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "DashboardFileCheckResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "malicious_count": {
+                "type": "integer",
+                "description": "恶意文件数"
+              },
+              "suspicious_count": {
+                "type": "integer",
+                "description": "可疑文件数"
+              },
+              "transport_action": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "action_type": {
+                      "type": "string",
+                      "description": "行为类别：upload-上传, download-下载, transport-传输"
+                    },
+                    "malicious_count": {
+                      "type": "integer",
+                      "description": "恶意文件数"
+                    },
+                    "suspicious_count": {
+                      "type": "integer",
+                      "description": "可疑文件数"
+                    }
+                  }
+                },
+                "description": "传输行为统计"
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "DashboardPhaseSumResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "ransom": {
+                "type": "integer",
+                "description": "勒索软件"
+              },
+              "direction_out": {
+                "type": "integer",
+                "description": "向外威胁数"
+              },
+              "success_exploit": {
+                "type": "integer",
+                "description": "漏洞利用成功"
+              },
+              "direction_in": {
+                "type": "integer",
+                "description": "向内威胁数"
+              },
+              "attack_out": {
+                "type": "integer",
+                "description": "对外攻击"
+              },
+              "lateral": {
+                "type": "integer",
+                "description": "内网渗透"
+              },
+              "c2": {
+                "type": "integer",
+                "description": "命令与控制"
+              },
+              "exfil": {
+                "type": "integer",
+                "description": "数据窃取"
+              },
+              "direction_lateral": {
+                "type": "integer",
+                "description": "内对内威胁数"
+              },
+              "file": {
+                "type": "integer",
+                "description": "恶意样本"
+              },
+              "recon": {
+                "type": "integer",
+                "description": "侦察"
+              },
+              "exploit": {
+                "type": "integer",
+                "description": "漏洞利用"
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "DashboardLoginApiResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "login_api_count": {
+                "type": "integer",
+                "description": "全部登录入口数"
+              },
+              "weak_pwd_count": {
+                "type": "integer",
+                "description": "全部弱口令数"
+              },
+              "login_api_and_risk": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "count": {
+                      "type": "integer",
+                      "description": "登录入口风险数量"
+                    },
+                    "risk_type": {
+                      "type": "string",
+                      "description": "风险类型"
+                    }
+                  }
+                },
+                "description": "登录入口风险统计"
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "DashboardVulnerabilityResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "vulnerability_count": {
+                "type": "object",
+                "properties": {
+                  "vulnerabilities_exist": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "description": "存在漏洞风险统计"
+                  },
+                  "misconfigured_risk": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "description": "配置不当风险统计"
+                  },
+                  "access_risk": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "description": "访问风险统计"
+                  },
+                  "login_risk": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "description": "登录风险统计"
+                  },
+                  "app_framework_risk": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "description": "应用框架使用风险统计"
+                  }
+                }
+              },
+              "vulnerability_items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "vulnerability_name": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "脆弱性名称"
+                    },
+                    "severity": {
+                      "type": "array",
+                      "items": {
+                        "type": "integer"
+                      },
+                      "description": "严重级别"
+                    },
+                    "vulnerability_type": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "脆弱性类型"
+                    },
+                    "vulnerability_type_desc": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "脆弱性类型描述"
+                    },
+                    "machine_count": {
+                      "type": "integer",
+                      "description": "主机数量"
+                    },
+                    "machine": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "主机列表"
+                    },
+                    "last_occ_time": {
+                      "type": "integer",
+                      "description": "最近发生时间"
+                    },
+                    "disposal_time": {
+                      "type": "integer",
+                      "description": "处置时间"
+                    },
+                    "status": {
+                      "type": "integer",
+                      "description": "状态"
+                    }
+                  }
+                },
+                "description": "脆弱性项目列表"
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "PaginationInfo": {
+        "type": "object",
+        "properties": {
+          "cur_page": {
+            "type": "integer",
+            "description": "当前页码"
+          },
+          "page_size": {
+            "type": "integer",
+            "description": "每页数量"
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sort_by": {
+                  "type": "string",
+                  "description": "排序字段"
+                },
+                "sort_order": {
+                  "type": "string",
+                  "description": "排序方式：asc-升序, desc-降序",
+                  "enum": [
+                    "asc",
+                    "desc"
+                  ]
+                }
+              }
+            },
+            "description": "排序条件"
+          },
+          "total_pages": {
+            "type": "integer",
+            "description": "总页数"
+          },
+          "total_num": {
+            "type": "integer",
+            "description": "总数量"
+          },
+          "page_items_num": {
+            "type": "integer",
+            "description": "当前页实际数量"
+          }
+        }
+      },
+      "AlertSumListRequest": {
+        "type": "object",
+        "properties": {
+          "condition": {
+            "type": "object",
+            "properties": {
+              "time_from": {
+                "type": "integer",
+                "description": "开始时间戳"
+              },
+              "time_to": {
+                "type": "integer",
+                "description": "截止时间戳"
+              },
+              "assets_group": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                },
+                "description": "业务组"
+              }
+            },
+            "required": [
+              "time_from",
+              "time_to"
+            ]
+          },
+          "page": {
+            "$ref": "#/components/schemas/PaginationInfo"
+          }
+        },
+        "required": [
+          "condition",
+          "page"
+        ]
+      },
+      "ThreatInfo": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "威胁名称"
+          },
+          "suuid": {
+            "type": "string",
+            "description": "威胁唯一标识"
+          },
+          "level": {
+            "type": "string",
+            "description": "威胁级别：attack, action, risk"
+          },
+          "result": {
+            "type": "string",
+            "description": "攻击结果：success-成功, failed-失败, unknown-尝试"
+          },
+          "severity": {
+            "type": "integer",
+            "description": "告警的严重级别：0-信息, 1-低, 2-中, 3-高, 4-严重"
+          },
+          "phase": {
+            "type": "string",
+            "description": "攻击阶段"
+          },
+          "type": {
+            "type": "string",
+            "description": "威胁类型"
+          },
+          "confidence": {
+            "type": "integer",
+            "description": "置信度"
+          },
+          "ioc": {
+            "type": "string",
+            "description": "IOC指标"
+          },
+          "status": {
+            "type": "integer",
+            "description": "处置状态"
+          },
+          "module": {
+            "type": "string",
+            "description": "检测模块"
+          },
+          "is_apt": {
+            "type": "integer",
+            "description": "是否是APT攻击"
+          },
+          "ioc_type": {
+            "type": "string",
+            "description": "IOC类型"
+          },
+          "type_desc": {
+            "type": "string",
+            "description": "威胁类型描述"
+          },
+          "severity_desc": {
+            "type": "string",
+            "description": "严重级别描述"
+          },
+          "status_desc": {
+            "type": "string",
+            "description": "处置状态描述"
+          }
+        }
+      },
+      "AlertSumListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "事件ID"
+                    },
+                    "direction": {
+                      "type": "string",
+                      "description": "告警方向：in-外部攻击, out-失陷破坏, lateral-内网渗透"
+                    },
+                    "machine": {
+                      "type": "string",
+                      "description": "告警主机IP"
+                    },
+                    "external_ip": {
+                      "type": "string",
+                      "description": "外部IP"
+                    },
+                    "threat": {
+                      "$ref": "#/components/schemas/ThreatInfo"
+                    },
+                    "alert_count": {
+                      "type": "integer",
+                      "description": "告警数"
+                    },
+                    "max_severity": {
+                      "type": "integer",
+                      "description": "最大严重级别"
+                    },
+                    "host_count": {
+                      "type": "integer",
+                      "description": "主机数"
+                    },
+                    "last_occ_time": {
+                      "type": "integer",
+                      "description": "最近发现时间"
+                    },
+                    "last_occ_time_desc": {
+                      "type": "string",
+                      "description": "最近发现时间描述"
+                    }
+                  }
+                }
+              },
+              "page": {
+                "$ref": "#/components/schemas/PaginationInfo"
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "DashboardTrackResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "if_enable_track": {
+                "type": "boolean",
+                "description": "是否开启跟踪狩猎"
+              },
+              "track_list": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "跟踪与狩猎ID"
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "类型：sql-保存的调查语句, custom_ioc-自定义情报"
+                    },
+                    "order": {
+                      "type": "integer",
+                      "description": "排序权重"
+                    },
+                    "sql": {
+                      "type": "string",
+                      "description": "SQL查询语句"
+                    },
+                    "track_name": {
+                      "type": "string",
+                      "description": "跟踪项名称"
+                    },
+                    "event_count": {
+                      "type": "integer",
+                      "description": "总事件数量"
+                    },
+                    "hw_event_count": {
+                      "type": "integer",
+                      "description": "与攻击队列相关事件"
+                    },
+                    "hw_sql": {
+                      "type": "string",
+                      "description": "与攻击队列相关SQL"
+                    },
+                    "type_desc": {
+                      "type": "string",
+                      "description": "类型描述"
+                    }
+                  }
+                },
+                "description": "跟踪与狩猎列表"
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "DashboardAppFrameResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "web_application_count": {
+                "type": "integer",
+                "description": "Web应用数"
+              },
+              "web_framework_count": {
+                "type": "integer",
+                "description": "框架数"
+              },
+              "top_web_application": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "应用名"
+                    },
+                    "time": {
+                      "type": "integer",
+                      "description": "发现时间"
+                    },
+                    "name_lower": {
+                      "type": "string",
+                      "description": "应用名小写"
+                    },
+                    "last_time": {
+                      "type": "integer",
+                      "description": "最近发现时间"
+                    },
+                    "class": {
+                      "type": "string",
+                      "description": "应用类型"
+                    },
+                    "sub_class": {
+                      "type": "string",
+                      "description": "应用子类型"
+                    },
+                    "machine_count": {
+                      "type": "integer",
+                      "description": "主机数"
+                    },
+                    "is_active": {
+                      "type": "boolean",
+                      "description": "是否活跃"
+                    },
+                    "is_new": {
+                      "type": "boolean",
+                      "description": "是否新上线"
+                    }
+                  }
+                },
+                "description": "TOP Web应用"
+              },
+              "top_web_framework": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "框架名"
+                    },
+                    "time": {
+                      "type": "integer",
+                      "description": "发现时间"
+                    },
+                    "name_lower": {
+                      "type": "string",
+                      "description": "框架名小写"
+                    },
+                    "last_time": {
+                      "type": "integer",
+                      "description": "最近发现时间"
+                    },
+                    "class": {
+                      "type": "string",
+                      "description": "框架类型"
+                    },
+                    "machine_count": {
+                      "type": "integer",
+                      "description": "主机数"
+                    },
+                    "is_active": {
+                      "type": "boolean",
+                      "description": "是否活跃"
+                    },
+                    "is_new": {
+                      "type": "boolean",
+                      "description": "是否新上线"
+                    }
+                  }
+                },
+                "description": "TOP Web框架"
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "UnhandledHostListRequest": {
+        "type": "object",
+        "properties": {
+          "condition": {
+            "type": "object",
+            "properties": {
+              "time_from": {
+                "type": "integer",
+                "description": "开始时间戳"
+              },
+              "time_to": {
+                "type": "integer",
+                "description": "截止时间戳"
+              },
+              "assets_group": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                },
+                "description": "业务组"
+              },
+              "machine_type": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                },
+                "description": "主机类型，服务器：1 终端：0"
+              }
+            },
+            "required": [
+              "time_from",
+              "time_to"
+            ]
+          },
+          "page": {
+            "$ref": "#/components/schemas/PaginationInfo"
+          }
+        },
+        "required": [
+          "condition",
+          "page"
+        ]
+      },
+      "UnhandledHostListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "事件ID"
+                    },
+                    "machine": {
+                      "type": "string",
+                      "description": "主机IP"
+                    },
+                    "threat": {
+                      "$ref": "#/components/schemas/ThreatInfo"
+                    },
+                    "assetSection": {
+                      "type": "string",
+                      "description": "主机类型：服务器或终端"
+                    },
+                    "status_tags": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string",
+                            "description": "状态名称"
+                          },
+                          "desc": {
+                            "type": "string",
+                            "description": "状态描述"
+                          },
+                          "long_desc": {
+                            "type": "string",
+                            "description": "完整描述"
+                          }
+                        }
+                      },
+                      "description": "威胁状态标签"
+                    }
+                  }
+                }
+              },
+              "page": {
+                "$ref": "#/components/schemas/PaginationInfo"
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "ServiceClassRequest": {
+        "type": "object",
+        "properties": {
+          "assets_group": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "description": "业务组"
+          },
+          "is_public": {
+            "type": "boolean",
+            "description": "是否对外开放"
+          },
+          "is_new": {
+            "type": "boolean",
+            "description": "是否新上线"
+          }
+        }
+      },
+      "ServiceClassResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "service_class": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "service_class": {
+                      "type": "string",
+                      "description": "服务大类名称"
+                    },
+                    "service_count": {
+                      "type": "integer",
+                      "description": "统计个数"
+                    }
+                  }
+                },
+                "description": "服务分类统计"
+              },
+              "top_service_class": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "service": {
+                      "type": "string",
+                      "description": "服务名称"
+                    },
+                    "machineCount": {
+                      "type": "integer",
+                      "description": "关联主机个数"
+                    },
+                    "service_class": {
+                      "type": "string",
+                      "description": "服务大类名称"
+                    },
+                    "is_public": {
+                      "type": "boolean",
+                      "description": "是否对外开放"
+                    },
+                    "is_new": {
+                      "type": "boolean",
+                      "description": "是否新上线"
+                    }
+                  }
+                },
+                "description": "TOP服务分类"
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "PrivacyInfoResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "top_tags": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "tag_id": {
+                      "type": "string",
+                      "description": "标签ID"
+                    },
+                    "tag_name": {
+                      "type": "string",
+                      "description": "标签名称"
+                    },
+                    "count": {
+                      "type": "integer",
+                      "description": "命中标签的数量"
+                    }
+                  }
+                },
+                "description": "TOP标签统计"
+              },
+              "src_ip_distribution": {
+                "type": "object",
+                "properties": {
+                  "outland_ip_count": {
+                    "type": "integer",
+                    "description": "访问源境外IP数量"
+                  },
+                  "mainland_ip_count": {
+                    "type": "integer",
+                    "description": "访问源境内IP数量"
+                  },
+                  "local_ip_count": {
+                    "type": "integer",
+                    "description": "访问源内网IP数量"
+                  },
+                  "unknown_ip_count": {
+                    "type": "integer",
+                    "description": "访问源其他数量"
+                  }
+                },
+                "description": "访问源IP分布"
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "AlertLevelTrendResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "trend": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "time_from": {
+                      "type": "integer",
+                      "description": "起始时间"
+                    },
+                    "time_to": {
+                      "type": "integer",
+                      "description": "截至时间"
+                    },
+                    "risk_count": {
+                      "type": "integer",
+                      "description": "风险行为数"
+                    },
+                    "attack_count": {
+                      "type": "integer",
+                      "description": "攻击行为数"
+                    },
+                    "action_count": {
+                      "type": "integer",
+                      "description": "敏感行为数"
+                    }
+                  }
+                },
+                "description": "趋势数据"
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "FallHostSumListRequest": {
+        "type": "object",
+        "properties": {
+          "condition": {
+            "type": "object",
+            "properties": {
+              "asset_section": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "主机类型，可传：'服务器'或'终端'"
+              },
+              "time_from": {
+                "type": "integer",
+                "description": "开始时间戳"
+              },
+              "time_to": {
+                "type": "integer",
+                "description": "截止时间戳"
+              },
+              "assets_group": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                },
+                "description": "业务组"
+              },
+              "disposal_status": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                },
+                "description": "主机处置状态，1-未处理，3-已处理"
+              },
+              "host_type": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "资产类型"
+              },
+              "severity": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                },
+                "description": "告警的严重级别；0:信息，1:低，2:中，3:高，4:严重"
+              },
+              "threat_characters": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "威胁性质：is_compromised(已失陷)、is_connected(建立远控连接)、is_apt(APT)、is_lateral(发起内网渗透)、is_in_success(被外部攻击成功)、is_attack_out(对外攻击)、is_webshell(Webshell)、is_ransom(勒索软件)"
+              },
+              "direction": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "告警方向：in-外部攻击、out-失陷破坏、lateral-内网渗透"
+              },
+              "threat_type": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "威胁类型"
+              },
+              "fuzzy": {
+                "type": "object",
+                "properties": {
+                  "keyword": {
+                    "type": "string",
+                    "description": "搜索关键词"
+                  },
+                  "fieldlist": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "搜索字段列表"
+                  }
+                },
+                "description": "模糊查询条件"
+              }
+            },
+            "required": [
+              "time_from",
+              "time_to",
+              "threat_characters"
+            ]
+          },
+          "page": {
+            "$ref": "#/components/schemas/PaginationInfo"
+          }
+        },
+        "required": [
+          "condition"
+        ]
+      },
+      "FallHostSumListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "事件ID"
+                    },
+                    "time": {
+                      "type": "integer",
+                      "description": "告警时间"
+                    },
+                    "direction": {
+                      "type": "string",
+                      "description": "告警方向"
+                    },
+                    "machine": {
+                      "type": "string",
+                      "description": "告警主机"
+                    },
+                    "machine_name": {
+                      "type": "string",
+                      "description": "告警机器域名"
+                    },
+                    "threat": {
+                      "$ref": "#/components/schemas/ThreatInfo"
+                    },
+                    "assets": {
+                      "type": "object",
+                      "description": "资产数据"
+                    },
+                    "max_severity": {
+                      "type": "integer",
+                      "description": "最大严重级别"
+                    },
+                    "last_occ_time": {
+                      "type": "integer",
+                      "description": "最近发现时间"
+                    },
+                    "threat_tags": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          },
+                          "successful": {
+                            "type": "boolean"
+                          },
+                          "is_apt": {
+                            "type": "integer"
+                          },
+                          "disposal_status": {
+                            "type": "integer"
+                          }
+                        }
+                      },
+                      "description": "告警标签列表"
+                    },
+                    "status_tags": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          },
+                          "desc": {
+                            "type": "string"
+                          },
+                          "long_desc": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "description": "威胁状态"
+                    },
+                    "host_disposal_status": {
+                      "type": "integer",
+                      "description": "主机处置状态，1-未处理，3-已处理"
+                    }
+                  }
+                }
+              },
+              "page": {
+                "$ref": "#/components/schemas/PaginationInfo"
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "HostThreatListRequest": {
+        "type": "object",
+        "properties": {
+          "condition": {
+            "type": "object",
+            "properties": {
+              "asset_machine": {
+                "type": "string",
+                "description": "资产机器标识"
+              },
+              "device_id": {
+                "type": "string",
+                "description": "设备ID（级联平台需要）"
+              },
+              "severity": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                },
+                "description": "告警严重级别"
+              },
+              "threat_characters": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "威胁性质"
+              },
+              "direction": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "告警方向"
+              },
+              "threat_type": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "威胁类型"
+              },
+              "disposal_status": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "处置状态"
+              },
+              "time_from": {
+                "type": "integer",
+                "description": "开始时间戳"
+              },
+              "time_to": {
+                "type": "integer",
+                "description": "结束时间戳"
+              }
+            },
+            "required": [
+              "asset_machine",
+              "time_from",
+              "time_to"
+            ]
+          },
+          "page": {
+            "type": "object",
+            "properties": {
+              "cur_page": {
+                "type": "integer",
+                "description": "当前页码"
+              },
+              "page_size": {
+                "type": "integer",
+                "description": "每页数量"
+              },
+              "sort": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "sort_by": {
+                      "type": "string"
+                    },
+                    "sort_order": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "required": [
+              "cur_page",
+              "page_size"
+            ]
+          }
+        },
+        "required": [
+          "condition",
+          "page"
+        ]
+      },
+      "HostThreatListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "事件ID"
+                    },
+                    "threat": {
+                      "$ref": "#/components/schemas/ThreatInfo"
+                    },
+                    "threat_type_list": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "威胁类型"
+                    },
+                    "characters": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "string"
+                          },
+                          "desc": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "description": "威胁性质"
+                    },
+                    "max_severity": {
+                      "type": "integer",
+                      "description": "严重级别"
+                    },
+                    "attacker_list": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "关联实体-外部攻击IP"
+                    },
+                    "last_occ_time": {
+                      "type": "integer",
+                      "description": "最近发现时间"
+                    },
+                    "host_disposal_status": {
+                      "type": "integer",
+                      "description": "事件处理状态"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          },
+          "verbose_msg": {
+            "type": "string"
+          }
+        }
+      },
+      "InboundAttackSeverityRequest": {
+        "type": "object",
+        "properties": {
+          "condition": {
+            "type": "object",
+            "properties": {
+              "time_from": {
+                "type": "integer",
+                "description": "开始时间戳"
+              },
+              "time_to": {
+                "type": "integer",
+                "description": "截止时间戳"
+              },
+              "fuzzy": {
+                "type": "object",
+                "properties": {
+                  "keyword": {
+                    "type": "string"
+                  },
+                  "fieldlist": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "description": "模糊查询条件"
+              },
+              "severity": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                },
+                "description": "告警严重级别"
+              },
+              "result_list": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "攻击结果筛选：success, failed, unknown"
+              },
+              "cascade_asset_group": {
+                "type": "object",
+                "description": "级联资产组筛选"
+              }
+            },
+            "required": [
+              "time_from",
+              "time_to"
+            ]
+          }
+        },
+        "required": [
+          "condition"
+        ]
+      },
+      "InboundAttackSeverityResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "description": "严重级别，1:低危，2:中危，3:高危，4:严重"
+                },
+                "value": {
+                  "type": "integer",
+                  "description": "该严重级别的威胁事件数量"
+                }
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          },
+          "verbose_msg": {
+            "type": "string"
+          }
+        }
+      },
+      "IncidentSearchRequest": {
+        "type": "object",
+        "properties": {
+          "condition": {
+            "type": "object",
+            "properties": {
+              "duration": {
+                "type": "object",
+                "properties": {
+                  "begin_duration": {
+                    "type": "integer",
+                    "description": "起始持续时间(小时)"
+                  },
+                  "end_duration": {
+                    "type": "integer",
+                    "description": "终止持续时间(小时)"
+                  }
+                },
+                "required": [
+                  "begin_duration"
+                ]
+              },
+              "is_target_attack": {
+                "type": "boolean",
+                "description": "针对性攻击"
+              },
+              "severity": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                },
+                "description": "严重级别(0,1,2,3,4 对应 信息，低，中，高，严重)"
+              },
+              "phase": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "攻击阶段(recon,exploit,control,attack_out,post_exploit)"
+              },
+              "result": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "攻击结果(success, failed, unknown)"
+              },
+              "fuzzy": {
+                "type": "object",
+                "properties": {
+                  "keyword": {
+                    "type": "string"
+                  },
+                  "fieldlist": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "description": "模糊查询条件"
+              },
+              "time_from": {
+                "type": "integer",
+                "description": "开始时间戳"
+              },
+              "time_to": {
+                "type": "integer",
+                "description": "截止时间戳"
+              }
+            },
+            "required": [
+              "duration",
+              "time_from",
+              "time_to"
+            ]
+          },
+          "page": {
+            "$ref": "#/components/schemas/PaginationInfo"
+          }
+        },
+        "required": [
+          "condition"
+        ]
+      },
+      "IncidentSearchResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "severity": {
+                      "type": "integer",
+                      "description": "严重级别"
+                    },
+                    "phase": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "攻击阶段"
+                    },
+                    "incident_id": {
+                      "type": "string",
+                      "description": "事件ID"
+                    },
+                    "incident_name": {
+                      "type": "string",
+                      "description": "事件名称"
+                    },
+                    "attacker_ip": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "攻击者IP"
+                    },
+                    "host_ip": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "告警主机IP"
+                    },
+                    "host_name": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "告警主机名称"
+                    },
+                    "attack_name": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "攻击手法"
+                    },
+                    "attack_tool": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "攻击工具"
+                    },
+                    "attack_result": {
+                      "type": "string",
+                      "description": "攻击结果：success, failed, unknown"
+                    },
+                    "attack_type": {
+                      "type": "string",
+                      "description": "攻击类型"
+                    },
+                    "attack_type_reason": {
+                      "type": "string",
+                      "description": "攻击类型来由"
+                    },
+                    "is_proxy": {
+                      "type": "boolean",
+                      "description": "是否是代理"
+                    },
+                    "direction": {
+                      "type": "string",
+                      "description": "告警方向"
+                    },
+                    "first_time": {
+                      "type": "integer",
+                      "description": "首次发现时间"
+                    },
+                    "last_time": {
+                      "type": "integer",
+                      "description": "最近发现时间"
+                    },
+                    "result_count": {
+                      "type": "array",
+                      "items": {
+                        "type": "integer"
+                      },
+                      "description": "攻击结果对应的告警数"
+                    },
+                    "geo_data": {
+                      "type": "object",
+                      "properties": {
+                        "location": {
+                          "type": "string"
+                        },
+                        "Country": {
+                          "type": "string"
+                        },
+                        "Province": {
+                          "type": "string"
+                        },
+                        "City": {
+                          "type": "string"
+                        },
+                        "Latitude": {
+                          "type": "string"
+                        },
+                        "Longitude": {
+                          "type": "string"
+                        },
+                        "ISO2": {
+                          "type": "string"
+                        }
+                      },
+                      "description": "地理位置信息"
+                    },
+                    "success_count": {
+                      "type": "integer",
+                      "description": "攻击成功数"
+                    },
+                    "unknown_count": {
+                      "type": "integer",
+                      "description": "攻击尝试数"
+                    },
+                    "failed_count": {
+                      "type": "integer",
+                      "description": "攻击失败数"
+                    }
+                  }
+                }
+              },
+              "page": {
+                "$ref": "#/components/schemas/PaginationInfo"
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "IncidentIdTimeRangeRequest": {
+        "type": "object",
+        "properties": {
+          "incident_id": {
+            "type": "string",
+            "description": "事件ID"
+          },
+          "time_from": {
+            "type": "integer",
+            "description": "开始时间戳"
+          },
+          "time_to": {
+            "type": "integer",
+            "description": "截止时间戳"
+          }
+        },
+        "required": [
+          "incident_id",
+          "time_from",
+          "time_to"
+        ]
+      },
+      "IncidentTopAttackedEntityResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "attacked_entity": {
+                  "type": "string",
+                  "description": "被攻击实体（域名/IP）"
+                },
+                "domain": {
+                  "type": "string",
+                  "description": "域名"
+                },
+                "success_count": {
+                  "type": "integer",
+                  "description": "攻击成功数"
+                },
+                "failed_count": {
+                  "type": "integer",
+                  "description": "攻击失败数"
+                },
+                "unknown_count": {
+                  "type": "integer",
+                  "description": "攻击尝试数"
+                }
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "IncidentResultResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "threat_name": {
+                  "type": "string",
+                  "description": "威胁名称"
+                },
+                "host_count": {
+                  "type": "integer",
+                  "description": "主机数"
+                }
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "IncidentTimelineRequest": {
+        "type": "object",
+        "properties": {
+          "incident_id": {
+            "type": "string",
+            "description": "事件ID"
+          },
+          "include_risk": {
+            "type": "boolean",
+            "description": "是否包含风险"
+          },
+          "time_from": {
+            "type": "integer",
+            "description": "开始时间戳"
+          },
+          "time_to": {
+            "type": "integer",
+            "description": "截止时间戳"
+          }
+        },
+        "required": [
+          "incident_id",
+          "time_from",
+          "time_to"
+        ]
+      },
+      "IncidentTimelineResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "攻击过程ID"
+                    },
+                    "attacker": {
+                      "type": "string",
+                      "description": "攻击者IP"
+                    },
+                    "victim": {
+                      "type": "string",
+                      "description": "受害者主机"
+                    },
+                    "incident_id": {
+                      "type": "string",
+                      "description": "事件ID"
+                    },
+                    "alert_id_list": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "告警ID列表"
+                    },
+                    "alert_count": {
+                      "type": "integer",
+                      "description": "攻击数"
+                    },
+                    "success_count": {
+                      "type": "integer",
+                      "description": "攻击成功数"
+                    },
+                    "threat_name": {
+                      "type": "string",
+                      "description": "威胁名称"
+                    },
+                    "direction": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "告警方向"
+                    },
+                    "first_occ_time": {
+                      "type": "integer",
+                      "description": "最早发现时间"
+                    },
+                    "last_occ_time": {
+                      "type": "integer",
+                      "description": "最近发现时间"
+                    }
+                  }
+                }
+              },
+              "first_try": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "direction": {
+                    "type": "string"
+                  },
+                  "machine": {
+                    "type": "string"
+                  },
+                  "attacker": {
+                    "type": "string"
+                  },
+                  "victim": {
+                    "type": "string"
+                  },
+                  "data": {
+                    "type": "string"
+                  },
+                  "time": {
+                    "type": "string"
+                  }
+                },
+                "description": "首次访问"
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "AlertSearchRequest": {
+        "type": "object",
+        "properties": {
+          "condition": {
+            "type": "object",
+            "properties": {
+              "time_from": {
+                "type": "integer",
+                "description": "开始时间戳"
+              },
+              "time_to": {
+                "type": "integer",
+                "description": "截止时间戳"
+              },
+              "id": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "告警ID列表"
+              },
+              "include_risk": {
+                "type": "boolean",
+                "description": "是否包含风险"
+              },
+              "include_action": {
+                "type": "boolean",
+                "description": "是否包含事件"
+              }
+            },
+            "required": [
+              "time_from",
+              "time_to",
+              "id"
+            ]
+          },
+          "page": {
+            "type": "object",
+            "properties": {
+              "cur_page": {
+                "type": "integer"
+              },
+              "page_size": {
+                "type": "integer"
+              },
+              "sort": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "sort_by": {
+                      "type": "string"
+                    },
+                    "sort_order": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "required": [
+              "cur_page",
+              "page_size"
+            ]
+          }
+        },
+        "required": [
+          "condition",
+          "page"
+        ]
+      },
+      "AlertSearchResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "告警ID"
+                    },
+                    "time": {
+                      "type": "integer",
+                      "description": "告警时间"
+                    },
+                    "direction": {
+                      "type": "string",
+                      "description": "告警方向"
+                    },
+                    "machine": {
+                      "type": "string",
+                      "description": "告警主机"
+                    },
+                    "attacker": {
+                      "type": "string",
+                      "description": "攻击者IP"
+                    },
+                    "victim": {
+                      "type": "string",
+                      "description": "受害者IP"
+                    },
+                    "data": {
+                      "type": "string",
+                      "description": "域名、IP或URL"
+                    },
+                    "net": {
+                      "type": "object",
+                      "properties": {
+                        "proto": {
+                          "type": "string",
+                          "description": "协议"
+                        },
+                        "type": {
+                          "type": "string",
+                          "description": "类型"
+                        },
+                        "src_ip": {
+                          "type": "string",
+                          "description": "源IP"
+                        },
+                        "src_port": {
+                          "type": "integer",
+                          "description": "源端口"
+                        },
+                        "dest_ip": {
+                          "type": "string",
+                          "description": "目的IP"
+                        },
+                        "dest_port": {
+                          "type": "integer",
+                          "description": "目的端口"
+                        }
+                      }
+                    },
+                    "threat": {
+                      "$ref": "#/components/schemas/ThreatInfo"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "ServiceListRequest": {
+        "type": "object",
+        "properties": {
+          "condition": {
+            "type": "object",
+            "properties": {
+              "assets_group": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                }
+              },
+              "is_public": {
+                "type": "boolean"
+              },
+              "is_new": {
+                "type": "boolean"
+              }
+            }
+          },
+          "page": {
+            "$ref": "#/components/schemas/PaginationInfo"
+          }
+        }
+      },
+      "ServiceListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "service": {
+                      "type": "string",
+                      "description": "服务名称"
+                    },
+                    "machine": {
+                      "type": "string",
+                      "description": "主机IP"
+                    },
+                    "port": {
+                      "type": "integer",
+                      "description": "端口"
+                    },
+                    "service_class": {
+                      "type": "string",
+                      "description": "服务大类"
+                    },
+                    "is_public": {
+                      "type": "boolean",
+                      "description": "是否对外开放"
+                    },
+                    "is_new": {
+                      "type": "boolean",
+                      "description": "是否新上线"
+                    }
+                  }
+                }
+              },
+              "page": {
+                "$ref": "#/components/schemas/PaginationInfo"
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "DomainAssetListRequest": {
+        "type": "object",
+        "properties": {
+          "condition": {
+            "type": "object",
+            "properties": {
+              "assets_group": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "page": {
+            "$ref": "#/components/schemas/PaginationInfo"
+          }
+        }
+      },
+      "DomainAssetListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "domain": {
+                      "type": "string",
+                      "description": "域名"
+                    },
+                    "ip_list": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "IP列表"
+                    },
+                    "first_time": {
+                      "type": "integer",
+                      "description": "首次发现时间"
+                    },
+                    "last_time": {
+                      "type": "integer",
+                      "description": "最近发现时间"
+                    }
+                  }
+                }
+              },
+              "page": {
+                "$ref": "#/components/schemas/PaginationInfo"
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "ApiRiskListRequest": {
+        "type": "object",
+        "properties": {
+          "condition": {
+            "type": "object"
+          },
+          "page": {
+            "$ref": "#/components/schemas/PaginationInfo"
+          }
+        }
+      },
+      "ApiRiskListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "page": {
+                "$ref": "#/components/schemas/PaginationInfo"
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "ApiListRequest": {
+        "type": "object",
+        "properties": {
+          "condition": {
+            "type": "object"
+          },
+          "page": {
+            "$ref": "#/components/schemas/PaginationInfo"
+          }
+        }
+      },
+      "ApiListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "page": {
+                "$ref": "#/components/schemas/PaginationInfo"
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "WeakPasswordListRequest": {
+        "type": "object",
+        "properties": {
+          "condition": {
+            "type": "object"
+          },
+          "page": {
+            "$ref": "#/components/schemas/PaginationInfo"
+          }
+        }
+      },
+      "WeakPasswordListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "page": {
+                "$ref": "#/components/schemas/PaginationInfo"
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "PrivacyInfoListRequest": {
+        "type": "object",
+        "properties": {
+          "condition": {
+            "type": "object"
+          },
+          "page": {
+            "$ref": "#/components/schemas/PaginationInfo"
+          }
+        }
+      },
+      "PrivacyInfoListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "page": {
+                "$ref": "#/components/schemas/PaginationInfo"
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "LoginEntranceListRequest": {
+        "type": "object",
+        "properties": {
+          "condition": {
+            "type": "object"
+          },
+          "page": {
+            "$ref": "#/components/schemas/PaginationInfo"
+          }
+        }
+      },
+      "LoginEntranceListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "page": {
+                "$ref": "#/components/schemas/PaginationInfo"
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "LogSearchRequest": {
+        "type": "object",
+        "properties": {
+          "condition": {
+            "type": "object"
+          },
+          "page": {
+            "$ref": "#/components/schemas/PaginationInfo"
+          }
+        }
+      },
+      "LogSearchResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "page": {
+                "$ref": "#/components/schemas/PaginationInfo"
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "AlertPcapDownloadRequest": {
+        "type": "object",
+        "properties": {
+          "alert_id": {
+            "type": "string",
+            "description": "告警ID"
+          }
+        },
+        "required": [
+          "alert_id"
+        ]
+      },
+      "MaliciousFileDownloadRequest": {
+        "type": "object",
+        "properties": {
+          "alert_id": {
+            "type": "string",
+            "description": "告警ID"
+          }
+        },
+        "required": [
+          "alert_id"
+        ]
+      },
+      "MdrAlertAnalysisRequest": {
+        "type": "object",
+        "properties": {
+          "condition": {
+            "type": "object"
+          }
+        }
+      },
+      "MdrAlertAnalysisResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object"
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "SystemStatusResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "cpu_usage": {
+                "type": "number",
+                "description": "CPU使用率"
+              },
+              "memory_usage": {
+                "type": "number",
+                "description": "内存使用率"
+              },
+              "disk_usage": {
+                "type": "number",
+                "description": "磁盘使用率"
+              },
+              "uptime": {
+                "type": "integer",
+                "description": "运行时间(秒)"
+              },
+              "version": {
+                "type": "string",
+                "description": "系统版本"
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "CustomIocAddRequest": {
+        "type": "object",
+        "properties": {
+          "ioc_type": {
+            "type": "string",
+            "description": "IOC类型：ip, domain, url, hash等"
+          },
+          "ioc_value": {
+            "type": "string",
+            "description": "IOC值"
+          },
+          "threat_type": {
+            "type": "string",
+            "description": "威胁类型"
+          },
+          "description": {
+            "type": "string",
+            "description": "描述"
+          },
+          "expiration_time": {
+            "type": "integer",
+            "description": "过期时间戳"
+          }
+        },
+        "required": [
+          "ioc_type",
+          "ioc_value"
+        ]
+      },
+      "CustomIocAddResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "创建的自定义情报ID"
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "CustomIocDeleteRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "自定义情报ID"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "CustomIocListRequest": {
+        "type": "object",
+        "properties": {
+          "condition": {
+            "type": "object"
+          },
+          "page": {
+            "$ref": "#/components/schemas/PaginationInfo"
+          }
+        }
+      },
+      "CustomIocListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "ID"
+                    },
+                    "ioc_type": {
+                      "type": "string",
+                      "description": "IOC类型"
+                    },
+                    "ioc_value": {
+                      "type": "string",
+                      "description": "IOC值"
+                    },
+                    "threat_type": {
+                      "type": "string",
+                      "description": "威胁类型"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "描述"
+                    },
+                    "create_time": {
+                      "type": "integer",
+                      "description": "创建时间"
+                    },
+                    "expiration_time": {
+                      "type": "integer",
+                      "description": "过期时间"
+                    }
+                  }
+                }
+              },
+              "page": {
+                "$ref": "#/components/schemas/PaginationInfo"
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "AsideBlockAddRequest": {
+        "type": "object",
+        "properties": {
+          "ip": {
+            "type": "string",
+            "description": "要阻断的IP"
+          },
+          "duration": {
+            "type": "integer",
+            "description": "阻断时长(秒)"
+          },
+          "description": {
+            "type": "string",
+            "description": "描述"
+          }
+        },
+        "required": [
+          "ip"
+        ]
+      },
+      "AsideBlockAddResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "创建的阻断规则ID"
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "AsideBlockDeleteRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "阻断规则ID"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "AsideBlockListRequest": {
+        "type": "object",
+        "properties": {
+          "condition": {
+            "type": "object"
+          },
+          "page": {
+            "$ref": "#/components/schemas/PaginationInfo"
+          }
+        }
+      },
+      "AsideBlockListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "ID"
+                    },
+                    "ip": {
+                      "type": "string",
+                      "description": "阻断IP"
+                    },
+                    "duration": {
+                      "type": "integer",
+                      "description": "阻断时长"
+                    },
+                    "create_time": {
+                      "type": "integer",
+                      "description": "创建时间"
+                    },
+                    "expire_time": {
+                      "type": "integer",
+                      "description": "过期时间"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "描述"
+                    }
+                  }
+                }
+              },
+              "page": {
+                "$ref": "#/components/schemas/PaginationInfo"
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "LinkageBlockAddRequest": {
+        "type": "object",
+        "properties": {
+          "ip": {
+            "type": "string",
+            "description": "要阻断的IP"
+          },
+          "direction": {
+            "type": "string",
+            "description": "阻断方向：in-入站, out-出站, both-双向"
+          },
+          "duration": {
+            "type": "integer",
+            "description": "阻断时长(秒)"
+          },
+          "description": {
+            "type": "string",
+            "description": "描述"
+          }
+        },
+        "required": [
+          "ip"
+        ]
+      },
+      "LinkageBlockAddResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "创建的阻断规则ID"
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "LinkageBlockDeleteRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "阻断规则ID"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "LinkageBlockListRequest": {
+        "type": "object",
+        "properties": {
+          "condition": {
+            "type": "object"
+          },
+          "page": {
+            "$ref": "#/components/schemas/PaginationInfo"
+          }
+        }
+      },
+      "LinkageBlockListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "ID"
+                    },
+                    "ip": {
+                      "type": "string",
+                      "description": "阻断IP"
+                    },
+                    "direction": {
+                      "type": "string",
+                      "description": "阻断方向"
+                    },
+                    "duration": {
+                      "type": "integer",
+                      "description": "阻断时长"
+                    },
+                    "create_time": {
+                      "type": "integer",
+                      "description": "创建时间"
+                    },
+                    "expire_time": {
+                      "type": "integer",
+                      "description": "过期时间"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "描述"
+                    }
+                  }
+                }
+              },
+              "page": {
+                "$ref": "#/components/schemas/PaginationInfo"
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "AlertDisposalStatusUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "alert_id": {
+            "type": "string",
+            "description": "告警ID"
+          },
+          "disposal_status": {
+            "type": "integer",
+            "description": "处置状态：3-已处理, 3-1-已处理-完成处理, 3-2-已处理-正在处理, 3-3-已处理-无需处理"
+          },
+          "disposal_note": {
+            "type": "string",
+            "description": "处置备注"
+          }
+        },
+        "required": [
+          "alert_id",
+          "disposal_status"
+        ]
+      },
+      "AssetAddRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "资产名称"
+          },
+          "ip": {
+            "type": "string",
+            "description": "IP地址或CIDR"
+          },
+          "section": {
+            "type": "string",
+            "description": "资产类型：服务器, 终端"
+          },
+          "group_id": {
+            "type": "integer",
+            "description": "资产组ID"
+          },
+          "location": {
+            "type": "string",
+            "description": "位置"
+          }
+        },
+        "required": [
+          "name",
+          "ip"
+        ]
+      },
+      "AssetAddResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "description": "创建的资产ID"
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "AssetDeleteRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "资产ID"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "AssetListRequest": {
+        "type": "object",
+        "properties": {
+          "condition": {
+            "type": "object"
+          },
+          "page": {
+            "$ref": "#/components/schemas/PaginationInfo"
+          }
+        }
+      },
+      "AssetListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "description": "资产ID"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "资产名称"
+                    },
+                    "ip": {
+                      "type": "string",
+                      "description": "IP地址"
+                    },
+                    "section": {
+                      "type": "string",
+                      "description": "资产类型"
+                    },
+                    "group_id": {
+                      "type": "integer",
+                      "description": "资产组ID"
+                    },
+                    "group_name": {
+                      "type": "string",
+                      "description": "资产组名称"
+                    },
+                    "location": {
+                      "type": "string",
+                      "description": "位置"
+                    },
+                    "create_time": {
+                      "type": "integer",
+                      "description": "创建时间"
+                    }
+                  }
+                }
+              },
+              "page": {
+                "$ref": "#/components/schemas/PaginationInfo"
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "WhitelistAddRequest": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "白名单类型：ip, domain, url等"
+          },
+          "value": {
+            "type": "string",
+            "description": "白名单值"
+          },
+          "description": {
+            "type": "string",
+            "description": "描述"
+          }
+        },
+        "required": [
+          "type",
+          "value"
+        ]
+      },
+      "WhitelistAddResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "创建的白名单ID"
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      },
+      "WhitelistDeleteRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "白名单ID"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "WhitelistListRequest": {
+        "type": "object",
+        "properties": {
+          "condition": {
+            "type": "object"
+          },
+          "page": {
+            "$ref": "#/components/schemas/PaginationInfo"
+          }
+        }
+      },
+      "WhitelistListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "ID"
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "白名单类型"
+                    },
+                    "value": {
+                      "type": "string",
+                      "description": "白名单值"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "描述"
+                    },
+                    "create_time": {
+                      "type": "integer",
+                      "description": "创建时间"
+                    }
+                  }
+                }
+              },
+              "page": {
+                "$ref": "#/components/schemas/PaginationInfo"
+              }
+            }
+          },
+          "response_code": {
+            "type": "integer"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/v1/whitelist/add": {
+      "post": {
+        "tags": [
+          "Platform"
+        ],
+        "summary": "添加白名单",
+        "description": "添加名单过滤（白名单）",
+        "operationId": "addWhitelist",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ApiKey"
+          },
+          {
+            "$ref": "#/components/parameters/AuthTimestamp"
+          },
+          {
+            "$ref": "#/components/parameters/Sign"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WhitelistAddRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功添加白名单",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WhitelistAddResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

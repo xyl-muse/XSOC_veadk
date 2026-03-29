@@ -1,0 +1,152 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "XDR平台API - 安全事件模块",
+    "description": "XDR平台安全事件相关API接口，包括事件查询、处置、举证等功能",
+    "version": "1.0.0",
+    "contact": {
+      "name": "XDR API Support"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://{host}",
+      "description": "XDR平台服务器",
+      "variables": {
+        "host": {
+          "default": "xdr.example.com",
+          "description": "XDR平台主机地址"
+        }
+      }
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/api/xdr/v1/incidents/{uuid}/entities/host": {
+      "get": {
+        "tags": [
+          "incident-entities"
+        ],
+        "summary": "根据事件uuId获取事件主机实体",
+        "description": "获取指定安全事件的主机实体信息",
+        "operationId": "getIncidentHostEntities",
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "事件ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "example": "Success"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "成功"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "item": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "实体ID"
+                              },
+                              "hostIp": {
+                                "type": "string",
+                                "description": "主机IP"
+                              },
+                              "hostAssetId": {
+                                "type": "integer",
+                                "description": "主机资产ID"
+                              },
+                              "hostName": {
+                                "type": "string",
+                                "description": "主机名称"
+                              },
+                              "assetName": {
+                                "type": "string",
+                                "description": "资产名称"
+                              },
+                              "responsible": {
+                                "type": "string",
+                                "description": "责任人"
+                              },
+                              "branchName": {
+                                "type": "string",
+                                "description": "资产组名"
+                              },
+                              "classify": {
+                                "type": "string",
+                                "description": "资产类型"
+                              },
+                              "magnitude": {
+                                "type": "integer",
+                                "description": "重要程度，5:普通,7:核心"
+                              },
+                              "edrDealStatusInfo": {
+                                "type": "object",
+                                "properties": {
+                                  "status": {
+                                    "type": "string"
+                                  },
+                                  "expireTime": {
+                                    "type": "integer"
+                                  },
+                                  "isPermanent": {
+                                    "type": "boolean"
+                                  }
+                                }
+                              },
+                              "dealSuggestion": {
+                                "type": "string"
+                              },
+                              "businessAffection": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT Token认证，在Header中添加Authorization: Bearer {token}"
+      }
+    }
+  }
+}

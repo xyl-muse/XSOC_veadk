@@ -1,0 +1,184 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "XDR平台API - 安全事件模块",
+    "description": "XDR平台安全事件相关API接口，包括事件查询、处置、举证等功能",
+    "version": "1.0.0",
+    "contact": {
+      "name": "XDR API Support"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://{host}",
+      "description": "XDR平台服务器",
+      "variables": {
+        "host": {
+          "default": "xdr.example.com",
+          "description": "XDR平台主机地址"
+        }
+      }
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/api/xdr/v1/incidents/{uuid}/entities/process": {
+      "get": {
+        "tags": [
+          "incident-entities"
+        ],
+        "summary": "根据事件uuId获取事件进程实体",
+        "description": "获取指定安全事件的进程实体信息",
+        "operationId": "getIncidentProcessEntities",
+        "parameters": [
+          {
+            "name": "uuid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "事件ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "example": "Success"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "成功"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "item": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "ID"
+                              },
+                              "name": {
+                                "type": "string",
+                                "description": "进程名称"
+                              },
+                              "cmdLine": {
+                                "type": "string",
+                                "description": "命令行参数"
+                              },
+                              "threatLevel": {
+                                "type": "integer",
+                                "description": "威胁等级"
+                              },
+                              "intelligenceTag": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "description": "威胁情报标签"
+                              },
+                              "description": {
+                                "type": "string",
+                                "description": "描述"
+                              },
+                              "processType": {
+                                "type": "integer",
+                                "description": "进程类型"
+                              },
+                              "path": {
+                                "type": "string",
+                                "description": "进程路径"
+                              },
+                              "pid": {
+                                "type": "integer",
+                                "description": "进程PID"
+                              },
+                              "md5": {
+                                "type": "string",
+                                "description": "MD5"
+                              },
+                              "guid": {
+                                "type": "string",
+                                "description": "进程GUID"
+                              },
+                              "hostIp": {
+                                "type": "string",
+                                "description": "所属资产IP"
+                              },
+                              "branchName": {
+                                "type": "string",
+                                "description": "资产组名"
+                              },
+                              "classify": {
+                                "type": "string",
+                                "description": "资产类型"
+                              },
+                              "hostAssetId": {
+                                "type": "integer",
+                                "description": "资产ID"
+                              },
+                              "dealSuggestion": {
+                                "type": "string",
+                                "description": "处置建议"
+                              },
+                              "edrDealStatusInfo": {
+                                "type": "object",
+                                "properties": {
+                                  "status": {
+                                    "type": "string",
+                                    "description": "处置状态"
+                                  },
+                                  "expireTime": {
+                                    "type": "integer",
+                                    "description": "到期时间"
+                                  },
+                                  "isPermanent": {
+                                    "type": "boolean",
+                                    "description": "是否永久封禁"
+                                  }
+                                }
+                              },
+                              "businessAffection": {
+                                "type": "string",
+                                "description": "业务影响"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT Token认证，在Header中添加Authorization: Bearer {token}"
+      }
+    }
+  }
+}
