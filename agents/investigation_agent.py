@@ -14,11 +14,6 @@ class InvestigationAgent(Agent):
     display_name: str = "事件研判专家"
     description: str = "负责安全事件真实性研判，区分误报和真实攻击，提取关键线索"
 
-    # 模型配置
-    model_name: str = "iflow-rome-30ba3b"
-    model_provider: str = "openai"
-    model_api_base: str = "https://apis.iflow.cn/v1"
-    model_api_key: str = "sk-3e57cc3cafa15e65f40c5b2a6b708a68"
 
     # 系统提示词，定义智能体角色和能力
     instruction: str = """
@@ -54,7 +49,7 @@ class InvestigationAgent(Agent):
         self.logger.info(f"开始研判事件: {security_event.event_id}, 类型: {security_event.event_type_name}", trace_id=trace_id)
 
         # 2. 误报规则库匹配（快速判断）
-        false_positive_result = self._check_false_positive_rules(security_event)
+        false_positive_result = await self._check_false_positive_rules(security_event)
         if false_positive_result:
             security_event.status = EventStatus.FALSE_POSITIVE
             security_event.process_history.append({
@@ -99,7 +94,7 @@ class InvestigationAgent(Agent):
         security_event.context["alert_details"] = xdr_result
 
         # 4. 多源证据交叉验证逻辑
-        verification_result = self._verify_multisource_evidence(security_event)
+        verification_result = await self._verify_multisource_evidence(security_event)
         if verification_result:
             security_event.status = EventStatus.TRACING
             security_event.process_history.append({
@@ -181,70 +176,29 @@ XDR告警详情：{security_event.context.get('alert_details', '无')}
             "result": judgement_result
         }
 
-    def _check_false_positive_rules(self, security_event: SecurityEvent) -> Optional[str]:
-        """误报规则库匹配"""
-        raw_data = security_event.raw_data
+    async def _check_false_positive_rules(self, security_event: SecurityEvent) -> Optional[str]:
+        """误报规则库匹配（通过工具调用实现）"""
+        try:
+            false_positive_result = await self.call_tool(
+                "false_positive_detection",
+                {"event_data": security_event.model_dump()}
+            )
+            return false_positive_result.get("reason")
+        except Exception as e:
+            self.logger.error(f"误报规则库匹配失败: {str(e)}")
+            return None
 
-        # 1. 业务行为误报规则（暂时禁用，因为XDR事件原始数据可能包含相关关键词）
-        # business_keywords = ["test", "debug", "monitor", "health", "check"]
-        # if any(keyword in str(raw_data).lower() for keyword in business_keywords):
-        #     return "包含业务行为关键词(test/debug/monitor/health/check)，判断为误报"
-
-        # 2. 白名单匹配规则
-        white_list_ips = ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
-        if security_event.attack_source_ip:
-            from ipaddress import ip_address, IPv4Network
-            try:
-                src_ip = ip_address(security_event.attack_source_ip)
-                for network in white_list_ips:
-                    if src_ip in IPv4Network(network):
-                        return f"攻击源IP属于私有IP段({network})，判断为误报"
-            except:
-                pass
-
-        # 3. 高频告警规则（需要接入告警频率数据）
-        # TODO: 接入告警频率API
-
-        # 4. 明显误报模式匹配
-        if "正常流量" in str(raw_data) or "业务测试" in str(raw_data):
-            return "事件类型包含正常流量或业务测试，判断为误报"
-
-        # 5. GPT预研判结果为误报
-        gpt_result = security_event.context.get("gpt_result", "")
-        if isinstance(gpt_result, str) and gpt_result.lower() == "误报":
-            return "GPT预研判结果为误报"
-        elif isinstance(gpt_result, int) and gpt_result == 0:
-            return "GPT预研判结果为误报"
-
-        return None
-
-    def _verify_multisource_evidence(self, security_event: SecurityEvent) -> Optional[list]:
-        """多源证据交叉验证逻辑"""
-        clues = []
-
-        # 1. 威胁情报命中恶意标签 + 资产存在对应漏洞/服务
-        threat_intel = security_event.context.get("threat_intel", {})
-        asset_info = security_event.context.get("asset_info", {})
-        risk_tags = security_event.context.get("risk_tags", [])
-
-        if threat_intel.get("is_malicious") or threat_intel.get("risk_level") in ["high", "critical"]:
-            if "vulnerability" in str(asset_info).lower() or "service" in str(asset_info).lower() or len(risk_tags) > 0:
-                clues.append("威胁情报命中恶意标签，资产存在对应漏洞/服务")
-
-        # 2. 威胁情报 + XDR告警详情验证
-        alert_details = security_event.context.get("alert_details", {})
-        if threat_intel.get("is_malicious") and len(str(alert_details)) > 50:
-            clues.append("威胁情报命中恶意标签，XDR告警详情包含攻击线索")
-
-        # 3. 风险标签 + 攻击源IP验证
-        if len(risk_tags) > 0 and security_event.attack_source_ip:
-            clues.append(f"存在风险标签({','.join(risk_tags)})，攻击源IP({security_event.attack_source_ip})可疑")
-
-        # 4. 需要至少2个不同来源的证据支持真实攻击判定
-        if len(clues) >= 2:
-            return clues
-
-        return None
+    async def _verify_multisource_evidence(self, security_event: SecurityEvent) -> Optional[list]:
+        """多源证据交叉验证逻辑（通过工具调用实现）"""
+        try:
+            verification_result = await self.call_tool(
+                "evidence_verification",
+                {"event_data": security_event.model_dump()}
+            )
+            return verification_result.get("clues")
+        except Exception as e:
+            self.logger.error(f"多源证据交叉验证失败: {str(e)}")
+            return None
 
     def extract_clues(self, judgement_text: str) -> list:
         """从研判结果中提取攻击线索"""

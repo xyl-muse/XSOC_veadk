@@ -150,7 +150,15 @@ class TestResponseAgent:
         }
 
         security_event = SecurityEvent.from_input(event_data)
-        risk_assessment = agent._assess_risk(security_event)
+
+        # 设置工具调用返回结果
+        agent.call_tool.return_value = {
+            "risk_level": "high",
+            "impact_range": "medium",
+            "asset_importance": "high"
+        }
+
+        risk_assessment = await agent._assess_risk(security_event)
 
         assert risk_assessment["risk_level"] == "high"
         assert risk_assessment["impact_range"] == "medium"
@@ -177,7 +185,14 @@ class TestResponseAgent:
             "asset_importance": "high"
         }
 
-        response_strategy = agent._develop_response_strategy(security_event)
+        # 设置工具调用返回结果
+        agent.call_tool.return_value = {
+            "strategy_type": "comprehensive",
+            "execution_steps": ["IP封禁", "终端隔离", "告警通知"],
+            "expected_effect": "完全阻止攻击，防止进一步扩散"
+        }
+
+        response_strategy = await agent._develop_response_strategy(security_event)
 
         assert response_strategy["strategy_type"] == "comprehensive"
         assert "IP封禁" in response_strategy["execution_steps"]

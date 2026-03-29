@@ -40,11 +40,11 @@ class ResponseAgent(Agent):
         self.logger.info(f"开始风险评估和处置事件: {security_event.event_id}, 类型: {security_event.event_type_name}", trace_id=trace_id)
 
         # 2. 风险评估
-        risk_assessment = self._assess_risk(security_event)
+        risk_assessment = await self._assess_risk(security_event)
         security_event.context["risk_assessment"] = risk_assessment
 
         # 3. 制定处置策略
-        response_strategy = self._develop_response_strategy(security_event)
+        response_strategy = await self._develop_response_strategy(security_event)
         security_event.context["response_strategy"] = response_strategy
 
         # 4. 执行处置操作（需要经过HITL机制触发人工审核）
@@ -109,83 +109,37 @@ class ResponseAgent(Agent):
             "rollback_result": rollback_result
         }
 
-    def _assess_risk(self, security_event: SecurityEvent) -> Dict[str, Any]:
-        """风险评估"""
-        raw_data = security_event.raw_data
-
-        # 基础风险评估
-        risk_assessment = {
-            "risk_level": "medium",
-            "impact_range": "small",
-            "asset_importance": "normal"
-        }
-
-        # 检查原始数据中的风险等级
-        if "incidentSeverity" in raw_data:
-            severity = raw_data["incidentSeverity"]
-            if severity == 4:
-                risk_assessment["risk_level"] = "critical"
-            elif severity == 3:
-                risk_assessment["risk_level"] = "high"
-            elif severity == 2:
-                risk_assessment["risk_level"] = "medium"
-            elif severity == 1:
-                risk_assessment["risk_level"] = "low"
-
-        # 检查目标资产重要性
-        if security_event.attack_source_ip:
-            from ipaddress import ip_address, IPv4Network
-            try:
-                src_ip = ip_address(security_event.attack_source_ip)
-                # 内部网段通常被视为重要资产
-                internal_networks = ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
-                for network in internal_networks:
-                    if src_ip in IPv4Network(network):
-                        risk_assessment["asset_importance"] = "high"
-                        break
-            except:
-                pass
-
-        # 检查原始数据中的风险标签
-        if "riskTag" in raw_data:
-            risk_tags = raw_data["riskTag"]
-            if any(tag in risk_tags for tag in ["执行", "持久化", "横向移动", "权限提升"]):
-                risk_assessment["risk_level"] = "high"
-                risk_assessment["impact_range"] = "medium"
-
-        return risk_assessment
-
-    def _develop_response_strategy(self, security_event: SecurityEvent) -> Dict[str, Any]:
-        """制定处置策略"""
-        risk_assessment = security_event.context.get("risk_assessment", {})
-
-        # 根据风险等级制定处置策略
-        if risk_assessment.get("risk_level") == "critical":
-            response_strategy = {
-                "strategy_type": "comprehensive",
-                "execution_steps": ["IP封禁", "终端隔离", "告警通知"],
-                "expected_effect": "完全阻止攻击，防止进一步扩散"
+    async def _assess_risk(self, security_event: SecurityEvent) -> Dict[str, Any]:
+        """风险评估（通过工具调用实现）"""
+        try:
+            risk_result = await self.call_tool(
+                "risk_assessment",
+                {"event_data": security_event.model_dump()}
+            )
+            return risk_result
+        except Exception as e:
+            self.logger.error(f"风险评估失败: {str(e)}")
+            return {
+                "risk_level": "medium",
+                "impact_range": "small",
+                "asset_importance": "normal"
             }
-        elif risk_assessment.get("risk_level") == "high":
-            response_strategy = {
-                "strategy_type": "aggressive",
-                "execution_steps": ["IP封禁", "告警通知"],
-                "expected_effect": "阻止攻击，防止进一步扩散"
-            }
-        elif risk_assessment.get("risk_level") == "medium":
-            response_strategy = {
-                "strategy_type": "moderate",
-                "execution_steps": ["白名单管理", "告警通知"],
-                "expected_effect": "监控攻击，防止进一步扩散"
-            }
-        else:
-            response_strategy = {
+
+    async def _develop_response_strategy(self, security_event: SecurityEvent) -> Dict[str, Any]:
+        """制定处置策略（通过工具调用实现）"""
+        try:
+            strategy_result = await self.call_tool(
+                "response_strategy",
+                {"event_data": security_event.model_dump()}
+            )
+            return strategy_result
+        except Exception as e:
+            self.logger.error(f"制定处置策略失败: {str(e)}")
+            return {
                 "strategy_type": "light",
                 "execution_steps": ["告警通知"],
                 "expected_effect": "监控攻击，及时发现异常"
             }
-
-        return response_strategy
 
     async def _execute_response(self, security_event: SecurityEvent) -> Dict[str, Any]:
         """执行处置操作（需要经过HITL机制触发人工审核）"""

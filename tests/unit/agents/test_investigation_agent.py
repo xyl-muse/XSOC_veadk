@@ -151,7 +151,8 @@ class TestInvestigationAgent:
         assert "攻击类型：主机失陷活动" in clues
         assert "关键证据：包含执行、探测、防御规避、持久化、反弹Shell等风险行为" in clues
 
-    def test_check_false_positive_rules(self, agent):
+    @pytest.mark.asyncio
+    async def test_check_false_positive_rules(self, agent):
         """测试误报规则库匹配"""
         # 测试白名单IP误报
         event2 = SecurityEvent.from_input({
@@ -159,6 +160,10 @@ class TestInvestigationAgent:
             "event_type": "network_attack",
             "raw_data": {"description": "Internal network communication", "attack_source_ip": "10.0.0.10"}
         })
-        false_positive_result2 = agent._check_false_positive_rules(event2)
+
+        # 设置工具调用返回结果
+        agent.call_tool.return_value = {"reason": "攻击源IP属于私有IP段(10.0.0.0/8)，判断为误报"}
+
+        false_positive_result2 = await agent._check_false_positive_rules(event2)
         assert false_positive_result2 is not None
         assert "私有IP段" in false_positive_result2

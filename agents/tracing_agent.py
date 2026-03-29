@@ -64,7 +64,7 @@ class TracingAgent(Agent):
             security_event.context["process_entity"] = process_entity_result
 
         # 3. 还原攻击路径
-        attack_path = self._reconstruct_attack_path(security_event)
+        attack_path = await self._reconstruct_attack_path(security_event)
         if attack_path:
             security_event.status = EventStatus.RESPONDING
             security_event.process_history.append({
@@ -124,25 +124,17 @@ class TracingAgent(Agent):
             "result": tracing_result
         }
 
-    def _reconstruct_attack_path(self, security_event: SecurityEvent) -> Optional[dict]:
-        """还原攻击路径"""
-        attack_path = security_event.context.get("attack_path", {})
-
-        if attack_path:
-            # 提取攻击路径信息
-            entry_point = attack_path.get("entry_point", "未知")
-            lateral_movement = attack_path.get("lateral_movement", [])
-            privilege_escalation = attack_path.get("privilege_escalation", "未知")
-            c2_servers = attack_path.get("c2_servers", [])
-
-            return {
-                "entry_point": entry_point,
-                "lateral_movement": lateral_movement,
-                "privilege_escalation": privilege_escalation,
-                "c2_servers": c2_servers
-            }
-
-        return None
+    async def _reconstruct_attack_path(self, security_event: SecurityEvent) -> Optional[dict]:
+        """还原攻击路径（通过工具调用实现）"""
+        try:
+            attack_path_result = await self.call_tool(
+                "attack_path_reconstruction",
+                {"event_data": security_event.model_dump()}
+            )
+            return attack_path_result.get("attack_path")
+        except Exception as e:
+            self.logger.error(f"还原攻击路径失败: {str(e)}")
+            return None
 
     def extract_attack_clues(self, tracing_result: str) -> dict:
         """从溯源结果中提取攻击线索"""
