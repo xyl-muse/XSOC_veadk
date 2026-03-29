@@ -85,12 +85,12 @@ htmlcov/
 *.temp
 .cache/
 
-#工具的原始文档
+#工具的原始文档、数据脚本
 docs&data_demo/alert_demo/
 docs&data_demo/datascripts/
 docs&data_demo/api_docs/XDR/XDRAUTH
 docs&data_demo/api_docs/corplink/接口认证token.txt
-
+docs&data_demo/api_docs/XDR/XDR_openapi_specs/XDR回写数据接口.py
 
 
 #所有数据化的原始文档剔除

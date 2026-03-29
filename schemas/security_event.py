@@ -55,6 +55,7 @@ class EventStatus(str, Enum):
     TRACING = "tracing"
     RESPONDING = "responding"
     VISUALIZING = "visualizing"
+    ARCHIVED = "archived"
     COMPLETED = "completed"
     FAILED = "failed"
     FALSE_POSITIVE = "false_positive"
@@ -69,6 +70,7 @@ class EventStatus(str, Enum):
             self.TRACING: "溯源中",
             self.RESPONDING: "处置中",
             self.VISUALIZING: "报告生成中",
+            self.ARCHIVED: "已归档",
             self.COMPLETED: "已完成",
             self.FAILED: "处理失败",
             self.FALSE_POSITIVE: "误报",

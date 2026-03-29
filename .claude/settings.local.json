@@ -26,7 +26,10 @@
       "Bash(cd \"E:\\\\Study\\\\AI\\\\XSOC_veadk\" && find \"C:\\\\Users\\\\xyl\\\\AppData\\\\Roaming\\\\Python\\\\Python313\\\\site-packages\\\\veadk\" -type f -name \"*.py\" | xargs grep -l \"hitl\\\\|human_in_the_loop\\\\|supervisor\" | head -20)",
       "Bash(cd \"E:\\\\Study\\\\AI\\\\XSOC_veadk\" && python -m pytest tests/unit/agents/test_response_agent.py -v)",
       "Bash(python -m pytest tests/unit/agents/test_response_agent.py -v)",
-      "Bash(python -m pytest tests/unit/agents/test_response_agent.py -v -s)"
+      "Bash(python -m pytest tests/unit/agents/test_response_agent.py -v -s)",
+      "Bash(ls -la \"E:/Study/AI/XSOC_veadk/docs&data_demo/api_docs/XDR/\")",
+      "Bash(ls -la \"E:/Study/AI/XSOC_veadk/docs&data_demo/api_docs/XDR/XDRAUTH/\" \"E:/Study/AI/XSOC_veadk/docs&data_demo/api_docs/XDR/XDR_openapi_specs/\")",
+      "Bash(python -m pytest tests/unit/agents/test_visualization_agent.py -v)"
     ]
   }
 }
