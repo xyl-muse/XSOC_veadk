@@ -1,0 +1,968 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Fobrain2.0 CAASM 资产信息查询 API",
+    "description": "Fobrain2.0 资产中心 API 接口文档，用于查询互联网和内网资产列表",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://{host}",
+      "description": "Fobrain 平台服务器",
+      "variables": {
+        "host": {
+          "default": "x.x.x.x",
+          "description": "Fobrain 平台地址"
+        }
+      }
+    }
+  ],
+  "security": [
+    {
+      "ApiKeyAuth": []
+    }
+  ],
+  "paths": {
+    "/api/v1/asset": {
+      "get": {
+        "tags": [
+          "资产中心"
+        ],
+        "summary": "资产列表",
+        "description": "获取资产列表（互联网、内网列表皆使用此接口）",
+        "operationId": "getAssetList",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "页码",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "description": "每页数量",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "description": "关键词，模糊搜索",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "field_time",
+            "in": "query",
+            "description": "时间字段，可选值：created_at, updated_at",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["created_at", "updated_at"]
+              }
+            }
+          },
+          {
+            "name": "field_sort",
+            "in": "query",
+            "description": "排序字段",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "field",
+            "in": "query",
+            "description": "排序字段",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "description": "排序方式，true 正序，false 倒序",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "recycle",
+            "in": "query",
+            "description": "回收站筛选，1-不是，2-是，0-所有",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["0", "1", "2"]
+              }
+            }
+          },
+          {
+            "name": "must_attr",
+            "in": "query",
+            "description": "必须存在的属性（business-业务系统，department-部门，asset_classification-资产分类）",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["business", "department", "asset_classification"]
+              }
+            }
+          },
+          {
+            "name": "network_type",
+            "in": "query",
+            "description": "网络类型，1-内网，2-互联网，0-所有",
+            "schema": {
+              "type": "integer",
+              "enum": [0, 1, 2]
+            }
+          },
+          {
+            "name": "search_condition",
+            "in": "query",
+            "description": "高级筛选条件，JSON字符串格式。示例：{\"all_source_ids\": [1],\"operation_type_string\":\"in\",\"condition\":\"and\"}",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功返回资产列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetListResponse"
+                },
+                "example": {
+                  "code": 0,
+                  "message": "Success",
+                  "data": {
+                    "total": 85,
+                    "page": 1,
+                    "per_page": 15,
+                    "items": [
+                      {
+                        "id": "a1b2c3d4e5f678901234567890abcdef",
+                        "ip": "x.x.x.x",
+                        "ip_type": "IPv4",
+                        "hostname": [],
+                        "mac": [],
+                        "area": "区域A",
+                        "business": [],
+                        "business_department": ["部门Alpha"],
+                        "network_type": "内网",
+                        "status": "在线",
+                        "os": [],
+                        "ports": [
+                          {
+                            "port": 22,
+                            "protocol": "",
+                            "status": 0,
+                            "url": "",
+                            "domain": "",
+                            "title": ""
+                          }
+                        ],
+                        "source_names": [
+                          {
+                            "id": 1,
+                            "name": "系统名称A",
+                            "en_name": "system_a",
+                            "type": "asset_system"
+                          }
+                        ],
+                        "created_at": "2025-01-07 00:00:35",
+                        "updated_at": "2025-01-07 00:00:46"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization",
+        "description": "API Token 认证，从 Fobrain 平台设置 -> API TOKEN 配置 -> ApiToken 获取"
+      }
+    },
+    "schemas": {
+      "AssetListResponse": {
+        "type": "object",
+        "required": ["code", "message", "data"],
+        "properties": {
+          "code": {
+            "type": "integer",
+            "description": "响应状态码，0 表示成功"
+          },
+          "message": {
+            "type": "string",
+            "description": "响应信息"
+          },
+          "data": {
+            "$ref": "#/components/schemas/AssetListData"
+          }
+        }
+      },
+      "AssetListData": {
+        "type": "object",
+        "required": ["total", "page", "per_page", "items"],
+        "properties": {
+          "total": {
+            "type": "integer",
+            "description": "总数"
+          },
+          "page": {
+            "type": "integer",
+            "description": "当前页"
+          },
+          "per_page": {
+            "type": "integer",
+            "description": "每页数量"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssetItem"
+            }
+          }
+        }
+      },
+      "AssetItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "资产唯一标识"
+          },
+          "ip": {
+            "type": "string",
+            "description": "IP 地址"
+          },
+          "ip_type": {
+            "type": "string",
+            "description": "IP 类型，如 IPv4"
+          },
+          "ip_segment": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "IP 段"
+          },
+          "ip_mappings": {
+            "type": "object",
+            "description": "IP 映射"
+          },
+          "hostname": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "主机名"
+          },
+          "mac": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "MAC 地址"
+          },
+          "area": {
+            "type": "string",
+            "description": "所属区域"
+          },
+          "business": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BusinessInfo"
+            },
+            "description": "业务系统相关信息"
+          },
+          "business_department": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "业务部门"
+          },
+          "network_type": {
+            "type": "string",
+            "description": "网络类型（内网/互联网）"
+          },
+          "status": {
+            "type": "string",
+            "description": "状态（在线/离线）"
+          },
+          "os": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "操作系统"
+          },
+          "kernel": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "内核"
+          },
+          "maker": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "制造商"
+          },
+          "model": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "型号"
+          },
+          "cpu_brand": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "CPU 品牌"
+          },
+          "cpu_count": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "CPU 数量"
+          },
+          "cpu_maker": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "CPU 厂商"
+          },
+          "memory_size": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "内存大小"
+          },
+          "memory_usage_rate": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "内存使用率"
+          },
+          "disk_count": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "description": "磁盘数量"
+          },
+          "disk_size": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "description": "磁盘大小"
+          },
+          "disk_usage_rate": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "磁盘使用率"
+          },
+          "load_average": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "负载"
+          },
+          "eth_name": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "网卡名"
+          },
+          "machine_room": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "机房"
+          },
+          "sn": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "序列号"
+          },
+          "node_names": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "节点名称"
+          },
+          "oper": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "运维人员"
+          },
+          "oper_department": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DepartmentInfo"
+            },
+            "description": "运维部门"
+          },
+          "ports": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PortInfo"
+            },
+            "description": "端口信息"
+          },
+          "rule_infos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RuleInfo"
+            },
+            "description": "关联规则信息"
+          },
+          "source_names": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SourceName"
+            },
+            "description": "数据源名称集合"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "自定义标签"
+          },
+          "poc_num": {
+            "type": "integer",
+            "description": "漏洞数量"
+          },
+          "merge_count": {
+            "type": "integer",
+            "description": "融合次数"
+          },
+          "is_device_extracted": {
+            "type": "integer",
+            "description": "是否参与了实体提取，1-是融合了，2-是未融合"
+          },
+          "created_at": {
+            "type": "string",
+            "description": "首次上报时间"
+          },
+          "updated_at": {
+            "type": "string",
+            "description": "最后上报时间"
+          },
+          "last_response_at": {
+            "type": "string",
+            "nullable": true,
+            "description": "数据源更新时间"
+          },
+          "person_limit_hash": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "人员限制哈希"
+          },
+          "oper_info": {
+            "$ref": "#/components/schemas/OperInfo",
+            "description": "运维信息"
+          }
+        }
+      },
+      "BusinessInfo": {
+        "type": "object",
+        "properties": {
+          "system": {
+            "type": "string",
+            "description": "业务系统"
+          },
+          "system_id": {
+            "type": "string",
+            "description": "业务系统 ID"
+          },
+          "owner": {
+            "type": "string",
+            "description": "业务负责人"
+          },
+          "owner_id": {
+            "type": "string",
+            "description": "业务系统负责人 ID"
+          },
+          "department": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DepartmentInfo"
+            },
+            "description": "部门信息"
+          },
+          "source": {
+            "type": "string",
+            "description": "数据源"
+          },
+          "business_info": {
+            "$ref": "#/components/schemas/BusinessDetailInfo",
+            "description": "业务信息"
+          },
+          "addition": {
+            "type": "string",
+            "description": "未使用"
+          },
+          "business_from": {
+            "type": "integer",
+            "description": "业务来源"
+          },
+          "business_trusted_state": {
+            "type": "integer",
+            "description": "可信度，1-可信，2-待确认，3-黑名单"
+          }
+        }
+      },
+      "BusinessDetailInfo": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "ID"
+          },
+          "fid": {
+            "type": "string",
+            "description": "FID"
+          },
+          "business_name": {
+            "type": "string",
+            "description": "业务名称"
+          },
+          "address": {
+            "type": "string",
+            "description": "地址"
+          },
+          "continuity_level": {
+            "type": "integer",
+            "description": "连续性等级"
+          },
+          "from": {
+            "type": "integer",
+            "description": "来源"
+          },
+          "from_mark": {
+            "type": "integer",
+            "description": "来源标记"
+          },
+          "assets_attribute": {
+            "type": "object",
+            "properties": {
+              "important_types": {
+                "type": "integer",
+                "description": "重要性分类"
+              },
+              "insurance_level": {
+                "type": "integer",
+                "description": "等级保护"
+              },
+              "is_gj": {
+                "type": "integer",
+                "description": "是否关基设施"
+              },
+              "is_xc": {
+                "type": "integer",
+                "description": "是否信创"
+              },
+              "operating_env": {
+                "type": "string",
+                "description": "运行环境"
+              },
+              "purchase_type": {
+                "type": "integer",
+                "description": "采购类型"
+              },
+              "running_state": {
+                "type": "integer",
+                "description": "运行状态"
+              }
+            }
+          },
+          "department_base": {
+            "$ref": "#/components/schemas/DepartmentBase",
+            "description": "部门信息"
+          },
+          "person_base": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PersonBase"
+            },
+            "description": "人员信息"
+          },
+          "intranet_ips": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "内网 IP"
+          },
+          "internet_ips": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "互联网 IP"
+          },
+          "created_at": {
+            "type": "string",
+            "description": "创建时间"
+          },
+          "updated_at": {
+            "type": "string",
+            "description": "更新时间"
+          },
+          "deleted_at": {
+            "type": "string",
+            "description": "删除时间"
+          }
+        }
+      },
+      "DepartmentInfo": {
+        "type": "object",
+        "properties": {
+          "business_system_id": {
+            "type": "string",
+            "description": "业务系统 ID"
+          },
+          "business_system_name": {
+            "type": "string",
+            "description": "业务系统名称"
+          },
+          "user_id": {
+            "type": "string",
+            "description": "用户 ID"
+          },
+          "user_name": {
+            "type": "string",
+            "description": "用户名"
+          },
+          "name": {
+            "type": "string",
+            "description": "部门名称全称"
+          },
+          "id": {
+            "type": "integer",
+            "description": "ID"
+          },
+          "parents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DepartmentInfo"
+            },
+            "description": "父级部门信息"
+          }
+        }
+      },
+      "DepartmentBase": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "部门名称"
+          },
+          "parents": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "父级部门"
+          }
+        }
+      },
+      "PersonBase": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "名称"
+          },
+          "pgid": {
+            "type": "string",
+            "description": "PGID"
+          },
+          "fid": {
+            "type": "string",
+            "description": "FID"
+          },
+          "status": {
+            "type": "integer",
+            "description": "状态"
+          },
+          "reliability": {
+            "type": "integer",
+            "description": "可靠性"
+          },
+          "system_version": {
+            "type": "string",
+            "description": "系统版本号"
+          },
+          "tag_id": {
+            "type": "integer",
+            "description": "标签 ID"
+          },
+          "use_mark": {
+            "type": "string",
+            "description": "使用标记"
+          },
+          "department": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DepartmentInfo"
+            },
+            "description": "部门信息"
+          },
+          "find_info": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FindInfo"
+            },
+            "description": "查找相关信息"
+          }
+        }
+      },
+      "FindInfo": {
+        "type": "object",
+        "properties": {
+          "source_id": {
+            "type": "integer",
+            "description": "数据源 ID"
+          },
+          "node_id": {
+            "type": "integer",
+            "description": "节点 ID"
+          },
+          "source_value": {
+            "type": "string",
+            "description": "数据源上报的值"
+          },
+          "mapping_field": {
+            "type": "string",
+            "description": "匹配字段（work_number:工号, name:姓名, english_name:英文名, mobile:电话, email:邮箱）"
+          },
+          "find_count": {
+            "type": "integer",
+            "description": "匹配到的数量"
+          }
+        }
+      },
+      "PortInfo": {
+        "type": "object",
+        "properties": {
+          "port": {
+            "type": "integer",
+            "description": "端口号"
+          },
+          "protocol": {
+            "type": "string",
+            "description": "协议"
+          },
+          "status": {
+            "type": "integer",
+            "description": "状态"
+          },
+          "url": {
+            "type": "string",
+            "description": "URL"
+          },
+          "domain": {
+            "type": "string",
+            "description": "域名"
+          },
+          "title": {
+            "type": "string",
+            "description": "标题"
+          }
+        }
+      },
+      "RuleInfo": {
+        "type": "object",
+        "properties": {
+          "product": {
+            "type": "string",
+            "description": "组件信息"
+          },
+          "first_tag": {
+            "type": "string",
+            "description": "分类"
+          },
+          "second_tag": {
+            "type": "string",
+            "description": "资产类型"
+          },
+          "level": {
+            "type": "string",
+            "description": "层级"
+          }
+        }
+      },
+      "SourceName": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "数据源 ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "数据源名称"
+          },
+          "en_name": {
+            "type": "string",
+            "description": "英文名"
+          },
+          "type": {
+            "type": "string",
+            "description": "类型"
+          },
+          "desc": {
+            "type": "string",
+            "description": "描述"
+          },
+          "icon": {
+            "type": "string",
+            "description": "图标"
+          },
+          "version": {
+            "type": "string",
+            "description": "版本"
+          },
+          "status": {
+            "type": "integer",
+            "description": "状态"
+          },
+          "show": {
+            "type": "integer",
+            "description": "显示"
+          },
+          "sort": {
+            "type": "integer",
+            "description": "排序"
+          },
+          "is_task_sync": {
+            "type": "boolean",
+            "description": "是否主动下发"
+          },
+          "is_cron_sync": {
+            "type": "boolean",
+            "description": "是否被动获取"
+          },
+          "has_asset_data": {
+            "type": "boolean",
+            "description": "是否包含资产数据"
+          },
+          "has_vul_data": {
+            "type": "boolean",
+            "description": "是否包含漏洞数据"
+          },
+          "has_personnel_data": {
+            "type": "boolean",
+            "description": "是否包含人员台账数据"
+          },
+          "has_sync": {
+            "type": "integer",
+            "description": "节点类型，1-节点下发，2-被动获取"
+          },
+          "created_at": {
+            "type": "string",
+            "description": "创建时间"
+          },
+          "updated_at": {
+            "type": "string",
+            "description": "更新时间"
+          }
+        }
+      },
+      "OperInfo": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true,
+            "description": "ID"
+          },
+          "fid": {
+            "type": "string",
+            "nullable": true,
+            "description": "FID"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "description": "运维人员名称"
+          },
+          "source_value": {
+            "type": "string",
+            "description": "数据源值"
+          },
+          "department": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DepartmentInfo"
+            },
+            "description": "部门"
+          }
+        }
+      }
+    }
+  }
+}

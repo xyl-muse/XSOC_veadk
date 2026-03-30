@@ -91,7 +91,6 @@ docs&data_demo/datascripts/
 docs&data_demo/api_docs/XDR/XDRAUTH
 docs&data_demo/api_docs/corplink/接口认证token.txt
 docs&data_demo/api_docs/XDR/XDR_openapi_specs/XDR回写数据接口.py
-docs&data_demo/api_docs/ITSM
 
 # CAASM 敏感资产数据
 docs&data_demo/api_docs/CAASM/assets_data.json
