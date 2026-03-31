@@ -6,6 +6,7 @@ import os
 import httpx
 from typing import Optional, Dict, Any, List
 import asyncio
+from google.adk.tools.tool_context import ToolContext
 
 
 def _get_config():
@@ -34,7 +35,7 @@ async def threat_intel_query(
     domain: Optional[str] = None,
     hash: Optional[str] = None,
     platform: str = "all",
-    tool_context = None,
+    tool_context: ToolContext = None,
 ) -> Dict[str, Any]:
     """
     攻击源威胁情报查询工具

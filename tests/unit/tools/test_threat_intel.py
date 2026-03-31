@@ -8,14 +8,14 @@ class TestThreatIntelQueryTool:
     """攻击源威胁情报查询工具测试类"""
 
     @pytest.mark.asyncio
-    @patch('tools.threat_intel_tool.settings')
+    @patch('tools.threat_intel_tool._get_config')
     @patch('tools.threat_intel_tool._query_threatbook')
     @patch('tools.threat_intel_tool._query_xdr')
-    async def test_threat_intel_threatbook_priority(self, mock_xdr, mock_threatbook, mock_settings):
+    async def test_threat_intel_threatbook_priority(self, mock_xdr, mock_threatbook, mock_get_config):
         """测试Threatbook平台优先查询"""
         # 模拟配置
-        mock_settings.tools = {
-            "threat_intel": {
+        mock_get_config.return_value = {
+            "threatbook": {
                 "enabled": True,
                 "base_url": "https://api.threatbook.cn/v3",
                 "api_key": "test-threatbook-key"
@@ -25,7 +25,7 @@ class TestThreatIntelQueryTool:
                 "base_url": "https://xdr.example.com",
                 "api_key": "test-xdr-key"
             },
-            "ndr": {"enabled": False}
+            "ndr": {"enabled": False, "base_url": "", "api_key": ""}
         }
 
         # 模拟返回结果
@@ -58,16 +58,18 @@ class TestThreatIntelQueryTool:
         mock_xdr.assert_called_once()
 
     @pytest.mark.asyncio
-    @patch('tools.threat_intel_tool.settings')
+    @patch('tools.threat_intel_tool._get_config')
     @patch('tools.threat_intel_tool._query_threatbook')
-    async def test_threat_intel_specific_platform(self, mock_threatbook, mock_settings):
+    async def test_threat_intel_specific_platform(self, mock_threatbook, mock_get_config):
         """测试指定平台查询"""
-        mock_settings.tools = {
-            "threat_intel": {
+        mock_get_config.return_value = {
+            "threatbook": {
                 "enabled": True,
                 "base_url": "https://api.threatbook.cn/v3",
                 "api_key": "test-threatbook-key"
-            }
+            },
+            "xdr": {"enabled": False, "base_url": "", "api_key": ""},
+            "ndr": {"enabled": False, "base_url": "", "api_key": ""}
         }
 
         mock_threatbook.return_value = {
@@ -181,10 +183,14 @@ class TestThreatIntelQueryTool:
         assert _get_risk_level_name("unknown") == "未知"
 
     @pytest.mark.asyncio
-    @patch('tools.threat_intel_tool.settings')
-    async def test_threat_intel_missing_query_param(self, mock_settings):
+    @patch('tools.threat_intel_tool._get_config')
+    async def test_threat_intel_missing_query_param(self, mock_get_config):
         """测试缺少查询参数的情况"""
-        mock_settings.tools = {}
+        mock_get_config.return_value = {
+            "threatbook": {"enabled": False, "base_url": "", "api_key": ""},
+            "xdr": {"enabled": False, "base_url": "", "api_key": ""},
+            "ndr": {"enabled": False, "base_url": "", "api_key": ""}
+        }
 
         result = await threat_intel_query()
 

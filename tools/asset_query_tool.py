@@ -6,6 +6,8 @@ import os
 import httpx
 from typing import Optional, Dict, Any, List
 import asyncio
+from google.adk.tools.tool_context import ToolContext
+from google.adk.tools.tool_context import ToolContext
 
 
 def _get_config():
@@ -37,7 +39,7 @@ def _get_config():
 async def asset_query(
     asset_ip: str,
     platform: str = "all",
-    tool_context = None,
+    tool_context: ToolContext = None,
 ) -> Dict[str, Any]:
     """
     资产信息查询工具
