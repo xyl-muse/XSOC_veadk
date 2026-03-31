@@ -1,46 +1,78 @@
 """告警及风险信息查询工具
 融合XDR、NDR、Corplink三个平台的告警及风险查询接口，支持多平台结果合并
 """
-from veadk.config import settings
+import os
 import httpx
-from typing import Optional, Dict, Any, List, Annotated
+from typing import Optional, Dict, Any, List
 import asyncio
-from typing_extensions import Doc
+from google.adk.tools.tool_context import ToolContext
+
+
+def _get_config():
+    """从环境变量获取工具配置"""
+    return {
+        "xdr": {
+            "enabled": os.getenv("XDR_ENABLED", "true").lower() == "true",
+            "base_url": os.getenv("XDR_API_BASE_URL", os.getenv("XDR_BASE_URL", "")),
+            "api_key": os.getenv("XDR_API_KEY", ""),
+        },
+        "ndr": {
+            "enabled": os.getenv("NDR_ENABLED", "true").lower() == "true",
+            "base_url": os.getenv("NDR_API_BASE_URL", os.getenv("NDR_BASE_URL", "")),
+            "api_key": os.getenv("NDR_API_KEY", ""),
+        },
+        "corplink": {
+            "enabled": os.getenv("CORPLINK_ENABLED", "true").lower() == "true",
+            "base_url": os.getenv("CORPLINK_BASE_URL", ""),
+            "api_key": os.getenv("CORPLINK_API_KEY", ""),
+        },
+    }
 
 
 async def alert_risk_query(
-    asset_ip: Annotated[Optional[str], Doc("要查询的资产IP地址，查询特定资产的告警时使用")] = None,
-    time_range: Annotated[str, Doc("查询时间范围，支持格式：1h/24h/7d/30d或时间戳范围，默认24h")] = "24h",
-    alert_type: Annotated[Optional[str], Doc("告警类型筛选，可选值：malware/attack/abnormal/policy等")] = None,
-    severity: Annotated[Optional[List[str]], Doc("告警级别筛选：info/low/medium/high/critical")] = None,
-    platform: Annotated[str, Doc("查询平台选择：xdr/ndr/corplink/all，默认all")] = "all",
-    page: Annotated[int, Doc("页码，默认1")] = 1,
-    page_size: Annotated[int, Doc("每页数量，默认10")] = 10
+    asset_ip: Optional[str] = None,
+    time_range: str = "24h",
+    alert_type: Optional[str] = None,
+    severity: Optional[List[str]] = None,
+    platform: str = "all",
+    page: int = 1,
+    page_size: int = 10,
+    tool_context: ToolContext = None,
 ) -> Dict[str, Any]:
     """
     告警及风险信息查询工具
     查询告警详情、风险信息、安全态势、调查分析相关数据，支持多平台数据融合
+
+    Args:
+        asset_ip: 要查询的资产IP地址，查询特定资产的告警时使用
+        time_range: 查询时间范围，支持格式：1h/24h/7d/30d或时间戳范围，默认24h
+        alert_type: 告警类型筛选，可选值：malware/attack/abnormal/policy等
+        severity: 告警级别筛选：info/low/medium/high/critical
+        platform: 查询平台选择：xdr/ndr/corplink/all，默认all
+        page: 页码，默认1
+        page_size: 每页数量，默认10
+        tool_context: 运行时上下文（可选）
+
+    Returns:
+        包含告警信息的字典，自动合并多平台结果
     """
-    config = settings
+    config = _get_config()
     timeout = 30
 
     # XDR平台配置
-    xdr_config = config.tools.get("xdr", {})
-    xdr_enabled = xdr_config.get("enabled", True)
-    xdr_base_url = xdr_config.get("base_url", "")
-    xdr_api_key = xdr_config.get("api_key", "")
+    xdr_enabled = config["xdr"]["enabled"]
+    xdr_base_url = config["xdr"]["base_url"]
+    xdr_api_key = config["xdr"]["api_key"]
 
     # NDR平台配置
-    ndr_config = config.tools.get("ndr", {})
-    ndr_enabled = ndr_config.get("enabled", True)
-    ndr_base_url = ndr_config.get("base_url", "")
-    ndr_api_key = ndr_config.get("api_key", "")
+    ndr_enabled = config["ndr"]["enabled"]
+    ndr_base_url = config["ndr"]["base_url"]
+    ndr_api_key = config["ndr"]["api_key"]
 
     # Corplink平台配置
-    corplink_config = config.tools.get("corplink", {})
-    corplink_enabled = corplink_config.get("enabled", True)
-    corplink_base_url = corplink_config.get("base_url", "")
-    corplink_api_key = corplink_config.get("api_key", "")
+    corplink_enabled = config["corplink"]["enabled"]
+    corplink_base_url = config["corplink"]["base_url"]
+    corplink_api_key = config["corplink"]["api_key"]
 
     platform = platform.lower()
 

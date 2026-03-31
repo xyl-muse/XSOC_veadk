@@ -1,14 +1,14 @@
-\"\"\"告警及风险信息查询工具单元测试\"\"\"
+"""告警及风险信息查询工具单元测试"""
 import pytest
 from unittest.mock import AsyncMock, patch, MagicMock
 from tools.alert_risk_query_tool import alert_risk_query, _merge_alert_results, _parse_time_range
 
 
 class TestAlertRiskQueryTool:
-    \"\"\"告警及风险信息查询工具测试类\"\"\"
+    """告警及风险信息查询工具测试类"""
 
     def test_parse_time_range(self):
-        \"\"\"测试时间范围解析\"\"\"
+        """测试时间范围解析"""
         import time
         now = int(time.time())
 
@@ -35,13 +35,13 @@ class TestAlertRiskQueryTool:
         assert start == now - 86400
 
     @pytest.mark.asyncio
-    @patch('tools.alert_risk_query_tool.settings')
+    @patch('tools.alert_risk_query_tool._get_config')
     @patch('tools.alert_risk_query_tool._query_xdr_alert')
     @patch('tools.alert_risk_query_tool._query_ndr_alert')
-    async def test_alert_query_multi_platform(self, mock_ndr, mock_xdr, mock_settings):
-        \"\"\"测试多平台告警查询\"\"\"
+    async def test_alert_query_multi_platform(self, mock_ndr, mock_xdr, mock_get_config):
+        """测试多平台告警查询"""
         # 模拟配置
-        mock_settings.tools = {
+        mock_get_config.return_value = {
             "xdr": {
                 "enabled": True,
                 "base_url": "https://xdr.example.com",
@@ -51,7 +51,8 @@ class TestAlertRiskQueryTool:
                 "enabled": True,
                 "base_url": "https://ndr.example.com",
                 "api_key": "test-ndr-key"
-            }
+            },
+            "corplink": {"enabled": False, "base_url": "", "api_key": ""}
         }
 
         # 模拟返回结果
@@ -107,11 +108,13 @@ class TestAlertRiskQueryTool:
         mock_ndr.assert_called_once()
 
     @pytest.mark.asyncio
-    @patch('tools.alert_risk_query_tool.settings')
+    @patch('tools.alert_risk_query_tool._get_config')
     @patch('tools.alert_risk_query_tool._query_corplink_alert')
-    async def test_alert_query_corplink(self, mock_corplink, mock_settings):
-        \"\"\"测试Corplink平台终端告警查询\"\"\"
-        mock_settings.tools = {
+    async def test_alert_query_corplink(self, mock_corplink, mock_get_config):
+        """测试Corplink平台终端告警查询"""
+        mock_get_config.return_value = {
+            "xdr": {"enabled": False, "base_url": "", "api_key": ""},
+            "ndr": {"enabled": False, "base_url": "", "api_key": ""},
             "corplink": {
                 "enabled": True,
                 "base_url": "https://corplink.example.com",
@@ -141,7 +144,7 @@ class TestAlertRiskQueryTool:
         mock_corplink.assert_called_once()
 
     def test_merge_alert_results_severity_stats(self):
-        \"\"\"测试告警级别统计\"\"\"
+        """测试告警级别统计"""
         platform_results = {
             "xdr": {
                 "platform": "xdr",
@@ -170,7 +173,7 @@ class TestAlertRiskQueryTool:
         assert merged["severity_statistics"]["info"] == 1
 
     def test_merge_alert_results_no_data(self):
-        \"\"\"测试所有平台都没有数据的情况\"\"\"
+        """测试所有平台都没有数据的情况"""
         platform_results = {
             "xdr": {"error": "查询失败"},
             "ndr": {"error": "接口超时"},
@@ -183,27 +186,29 @@ class TestAlertRiskQueryTool:
         assert merged["total"] == 0
 
     @pytest.mark.asyncio
-    @patch('tools.alert_risk_query_tool.settings')
-    async def test_alert_query_severity_filter(self, mock_settings):
-        \"\"\"测试告警级别筛选参数传递\"\"\"
-        mock_settings.tools = {
+    @patch('tools.alert_risk_query_tool._get_config')
+    @patch('tools.alert_risk_query_tool._query_xdr_alert')
+    async def test_alert_query_severity_filter(self, mock_xdr, mock_get_config):
+        """测试告警级别筛选参数传递"""
+        mock_get_config.return_value = {
             "xdr": {
                 "enabled": True,
                 "base_url": "https://xdr.example.com",
                 "api_key": "test-xdr-key"
-            }
+            },
+            "ndr": {"enabled": False, "base_url": "", "api_key": ""},
+            "corplink": {"enabled": False, "base_url": "", "api_key": ""}
         }
 
-        with patch('tools.alert_risk_query_tool._query_xdr_alert') as mock_xdr:
-            mock_xdr.return_value = {
-                "platform": "xdr",
-                "total": 0,
-                "alerts": []
-            }
+        mock_xdr.return_value = {
+            "platform": "xdr",
+            "total": 0,
+            "alerts": []
+        }
 
-            await alert_risk_query(severity=["high", "critical"], platform="xdr")
+        await alert_risk_query(severity=["high", "critical"], platform="xdr")
 
-            # 检查参数是否正确传递
-            call_args = mock_xdr.call_args
-            query_params = call_args[0][0]
-            assert query_params["severity"] == ["high", "critical"]
+        # 检查参数是否正确传递
+        call_args = mock_xdr.call_args
+        query_params = call_args[0][0]
+        assert query_params["severity"] == ["high", "critical"]
