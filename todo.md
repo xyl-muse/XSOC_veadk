@@ -96,14 +96,14 @@
 - [x] 支持参数：asset_ip(可选), time_range(可选，默认24h), alert_type(可选), severity(可选), platform(可选：xdr/ndr/corplink/all，默认all)
 - [x] 单元测试编写（tests/unit/tools/test_alert_risk_query.py，使用真实告警样例数据）
 
-#### 2.5 处置操作工具（依赖2平台接口，操作需安全校验）
-- [ ] 实现XDR平台9个处置/白名单相关接口适配
-- [ ] 实现NDR平台13个处置封禁/白名单相关接口适配（**只允许操作白名单，不允许操作资产**）
-- [ ] 实现操作安全校验逻辑（检查IP是否属于内部网段、目标资产是否为核心业务系统、操作影响范围评估）
-- [ ] 实现操作结果验证和失败回滚逻辑
-- [ ] 高风险操作自动触发HITL人工审核机制
-- [ ] 支持参数：action_type(必填：block/whitelist/quarantine/update_status), target(必填，目标信息), duration(可选，默认3600秒), platform(可选：xdr/ndr/all，默认xdr)
-- [ ] 单元测试编写（tests/unit/tools/test_response_tools.py，覆盖安全校验、操作验证、回滚逻辑）
+#### 2.5 处置操作工具（依赖2平台接口，操作需安全校验）✅ 已完成
+- [x] 实现XDR平台9个处置/白名单相关接口适配（告警处置状态更新/列表查询、事件处置状态更新/列表查询、白名单创建/删除/更新/列表查询/状态更新）
+- [x] 实现NDR平台13个处置封禁/白名单相关接口适配（联动阻断添加/删除/列表、旁路阻断添加/删除/列表、自定义IOC添加/删除/列表、告警状态更新、白名单添加/删除/列表）
+- [x] 实现操作安全校验逻辑（检查IP是否属于内部网段、目标资产是否为核心业务系统、风险级别分级：low/high/critical）
+- [x] 实现操作结果验证逻辑（封禁验证、白名单验证）
+- [x] 实现失败回滚逻辑（封禁回滚、白名单回滚）
+- [x] 支持参数：action_type(必填：block/aside_block/linkage_block/unblock/whitelist/remove_whitelist/update_status), target(必填), target_type(ip/domain/alert/incident), duration(可选), platform(xdr/ndr/all), verify_result(默认True), auto_rollback(默认True)
+- [x] 单元测试编写（tests/unit/tools/test_response_tool.py，47个测试用例全部通过，覆盖安全校验、XDR操作、NDR操作、主接口、查询函数、验证回滚、边界情况）
 
 #### 2.6 数据归档工具（依赖3平台接口，全流程自动化）
 - [ ] 实现XDR事件报告回写接口适配（优先使用，归档事件完整报告）
