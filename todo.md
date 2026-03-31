@@ -73,28 +73,28 @@
 - [x] 支持参数：asset_ip(必填), platform(可选：caasm/corplink/xdr/ndr/all，默认all)
 - [x] 单元测试编写（tests/unit/tools/test_asset_query.py，使用真实接口样例数据）
 
-#### 2.2 攻击源威胁情报查询工具（依赖3平台接口，优先级：ThreatbookMCP > XDR > NDR）
-- [ ] 实现ThreatbookMCP微步在线威胁情报查询接口适配（1选，必须优先查询）
-- [ ] 实现XDR攻击技术情报查询接口适配
-- [ ] 实现NDR攻击资产/威胁情报相关8个接口适配
-- [ ] 实现多平台威胁情报合并逻辑，返回统一格式的恶意判定结果（恶意标签、可信度、攻击类型、历史记录等）
-- [ ] 支持参数：query(必填，IP/域名/哈希), type(可选：ip/domain/hash，自动识别), platform(可选：threatbook/xdr/ndr/all，默认all)
-- [ ] 单元测试编写（tests/unit/tools/test_threat_intel.py，使用真实威胁情报样例数据）
+#### 2.2 攻击源威胁情报查询工具（依赖3平台接口，优先级：ThreatbookMCP > XDR > NDR）✅ 已完成
+- [x] 实现ThreatbookMCP微步在线威胁情报查询接口适配（1选，必须优先查询）
+- [x] 实现XDR攻击技术情报查询接口适配
+- [x] 实现NDR攻击资产/威胁情报相关接口适配
+- [x] 实现多平台威胁情报合并逻辑，返回统一格式的恶意判定结果（恶意标签、可信度、攻击类型、历史记录等）
+- [x] 支持参数：ip/domain/hash(三选一必填), platform(可选：threatbook/xdr/ndr/all，默认all)
+- [x] 单元测试编写（tests/unit/tools/test_threat_intel.py，使用真实威胁情报样例数据）
 
-#### 2.3 事件信息查询工具（依赖2平台接口，优先级：XDR > NDR）
-- [ ] 实现XDR平台11个事件相关接口适配（事件列表/趋势/实体/举证/统计等，1选，事件生产平台信息最全）
-- [ ] 实现NDR平台3个事件相关接口适配（事件结果/搜索/时间线，2选，根据告警情况使用）
-- [ ] 实现多平台事件信息合并逻辑，返回统一格式的事件详情
-- [ ] 支持参数：event_id(必填), platform(可选：xdr/ndr/all，默认all)
-- [ ] 单元测试编写（tests/unit/tools/test_event_query.py，使用真实XDR事件样例数据）
+#### 2.3 事件信息查询工具（依赖2平台接口，优先级：XDR > NDR）✅ 已完成
+- [x] 实现XDR平台11个事件相关接口适配（事件列表/趋势/实体/举证/统计等，1选，事件生产平台信息最全）
+- [x] 实现NDR平台3个事件相关接口适配（事件结果/搜索/时间线，2选，根据告警情况使用）
+- [x] 实现多平台事件信息合并逻辑，返回统一格式的事件详情
+- [x] 支持参数：event_id(选填，查询单个事件)/event_ids(选填，批量查询)/start_time(选填)/end_time(选填)/platform(可选：xdr/ndr/all，默认all)
+- [x] 单元测试编写（tests/unit/tools/test_event_query.py，使用真实XDR事件样例数据）
 
-#### 2.4 告警及风险信息查询工具（依赖3平台接口，按需调用）
-- [ ] 实现XDR平台9个告警/风险/日志相关接口适配
-- [ ] 实现NDR平台33个威胁/态势/风险/调查相关接口适配
-- [ ] 实现Corplink平台3个安全告警相关接口适配
-- [ ] 实现多平台告警风险信息合并逻辑，返回统一格式的告警数据
-- [ ] 支持参数：asset_ip(可选), time_range(可选，默认24h), event_type(可选), platform(可选：xdr/ndr/corplink/all，默认all)
-- [ ] 单元测试编写（tests/unit/tools/test_alert_risk_query.py，使用真实告警样例数据）
+#### 2.4 告警及风险信息查询工具（依赖3平台接口，按需调用）✅ 已完成
+- [x] 实现XDR平台9个告警/风险/日志相关接口适配
+- [x] 实现NDR平台33个威胁/态势/风险/调查相关接口适配
+- [x] 实现Corplink平台3个安全告警相关接口适配
+- [x] 实现多平台告警风险信息合并逻辑，返回统一格式的告警数据
+- [x] 支持参数：asset_ip(可选), time_range(可选，默认24h), alert_type(可选), severity(可选), platform(可选：xdr/ndr/corplink/all，默认all)
+- [x] 单元测试编写（tests/unit/tools/test_alert_risk_query.py，使用真实告警样例数据）
 
 #### 2.5 处置操作工具（依赖2平台接口，操作需安全校验）
 - [ ] 实现XDR平台9个处置/白名单相关接口适配

@@ -67,11 +67,11 @@ xsoc-agent/
 │   ├── response_agent.py       # 风险处置专家
 │   └── visualization_agent.py  # 数据可视化专家
 ├── tools/               # 安全工具集业务实现
-│   ├── threat_intel_tool.py    # 威胁情报查询工具
-│   ├── xdr_api_tools.py        # XDR API工具集
-│   ├── asset_query_tool.py     # 资产查询工具
-│   ├── ndr_edr_tools.py        # NDR/EDR工具集
-│   └── dingtalk_tools.py       # 钉钉工具集
+│   ├── asset_query_tool.py       # 资产信息查询工具
+│   ├── threat_intel_tool.py      # 攻击源威胁情报查询工具
+│   ├── event_query_tool.py       # 事件信息查询工具
+│   ├── alert_risk_query_tool.py  # 告警及风险信息查询工具
+│   └── data_archive_tool.py      # 数据归档工具
 ├── flows/               # 智能体协作流程定义
 ├── schemas/             # 数据模型定义
 │   └── security_event.py      # 标准化安全事件Schema
