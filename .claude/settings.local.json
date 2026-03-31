@@ -31,7 +31,8 @@
       "Bash(ls -la \"E:/Study/AI/XSOC_veadk/docs&data_demo/api_docs/XDR/XDRAUTH/\" \"E:/Study/AI/XSOC_veadk/docs&data_demo/api_docs/XDR/XDR_openapi_specs/\")",
       "Bash(python -m pytest tests/unit/agents/test_visualization_agent.py -v)",
       "Bash(cd \"E:\\\\Study\\\\AI\\\\XSOC_veadk\" && python -m pytest tests/unit/agents/ -v)",
-      "Bash(cd \"E:\\\\Study\\\\AI\\\\XSOC_veadk\" && python -m pytest tests/unit/agents/ -v --tb=short)"
+      "Bash(cd \"E:\\\\Study\\\\AI\\\\XSOC_veadk\" && python -m pytest tests/unit/agents/ -v --tb=short)",
+      "Bash(ls -la \"E:/2026/AI/XSOC_veadk/docs&data_demo/api_docs/ThreatbookMCP/\" \"E:/2026/AI/XSOC_veadk/docs&data_demo/api_docs/DingtalkAITable/\" \"E:/2026/AI/XSOC_veadk/docs&data_demo/api_docs/ITSM/\")"
     ]
   }
 }

@@ -52,28 +52,60 @@
 ---
 ### Phase 2: 安全工具集开发（预计5天，**依赖docs/目录下的接口文档**）
 > 📌 所有工具开发的唯一输入依据：`docs/`目录下对应的MCP/API接口说明文档，文档到位后才能启动开发
-#### 2.0 前置任务：接口文档收集和接口分类
+#### 2.0 前置任务：接口文档收集和接口分类 ✅ 已全部完成
 - [x] XDR平台API接口文档放入docs&data_demo/api_docs/XDR/（JSON格式）
 - [x] NDR平台API接口文档放入docs&data_demo/api_docs/NDR/（JSON格式）
 - [x] Corplink平台API接口文档放入docs&data_demo/api_docs/corplink/（JSON格式）
-- [ ] 钉钉AI表格API接口文档放入docs&data_demo/api_docs/DingtalkAITable/ (txt格式)
-- [ ] 微步在线威胁情报MCP文档放入docs&data_demo/api_docs/ThreatbookMCP/ (md格式)
-- [ ] 云盘资产查询接口文档放入docs&data_demo/api_docs/CAASM/云盘资产查询/ (py示例)
-- [ ] CAASM资产管理系统(产品fobrain)接口文档放入docs&data_demo/api_docs/CAASM/Fobrain/ (文档pdf+json)
-- [ ] ITSM工单系统接口文档放入docs&data_demo/api_docs/ITSM/ (py示例+md)
-- [ ] 按照各个工具的接口细则信息，筛选它属于六大主工具的哪一类，复制到对应位置(原接口文档不要动)，用于后续主工具构建
-- [ ] 根据主工具分类，完善todo2.2-2.7的子工具列举
-#### 2.1 资产信息查询工具（依赖docs&data_demo/api_docs/XDR/资产信息查询和docs&data_demo/api_docs/corplink/资产信息查询）
+- [x] 钉钉AI表格API接口文档放入docs&data_demo/api_docs/DingtalkAITable/ (txt格式)
+- [x] 微步在线威胁情报MCP文档放入docs&data_demo/api_docs/ThreatbookMCP/ (md格式)
+- [x] 云盘资产查询接口文档放入docs&data_demo/api_docs/CAASM/云盘资产查询/ (py示例)
+- [x] CAASM资产管理系统(产品fobrain)接口文档放入docs&data_demo/api_docs/CAASM/Fobrain/ (json格式)
+- [x] ITSM工单系统接口文档放入docs&data_demo/api_docs/ITSM/ (py示例+md)
+- [x] 按照各个工具的接口细则信息，完成全平台101个接口的六大工具分类，输出《docs&data_demo/api_docs/接口分类清单.md》（原接口文档未动，分类清单作为工具开发唯一指导）
+- [x] 根据主工具分类，完善2.1-2.6工具开发任务明细
+#### 2.1 资产信息查询工具（依赖4平台接口，优先级：CAASM > Corplink > XDR > NDR）
+- [ ] 实现CAASM云盘资产查询接口适配（服务器资产，1选优先）
+- [ ] 实现CAASM Fobrain资产列表查询接口适配
+- [ ] 实现Corplink设备信息查询接口适配（办公终端，1选优先）
+- [ ] 实现XDR风险资产查询/趋势查询接口适配（2选，资产数据少）
+- [ ] 实现NDR资产/域名/服务查询接口适配（3选，信息缺漏，最少使用）
+- [ ] 实现多平台资产信息合并逻辑，返回统一格式的资产数据
+- [ ] 支持参数：asset_ip(必填), platform(可选：caasm/corplink/xdr/ndr/all，默认all)
 
-#### 2.2 攻击源威胁情报查询工具（依赖docs&data_demo/api_docs/XDR/威胁情报查询和docs&data_demo/api_docs/ThreatbookMCP/）
+#### 2.2 攻击源威胁情报查询工具（依赖3平台接口，优先级：ThreatbookMCP > XDR > NDR）
+- [ ] 实现ThreatbookMCP微步在线威胁情报查询接口适配（1选，必须优先查询）
+- [ ] 实现XDR攻击技术情报查询接口适配
+- [ ] 实现NDR攻击资产/威胁情报相关8个接口适配
+- [ ] 实现多平台威胁情报合并逻辑，返回统一格式的恶意判定结果（恶意标签、可信度、攻击类型、历史记录等）
+- [ ] 支持参数：query(必填，IP/域名/哈希), type(可选：ip/domain/hash，自动识别), platform(可选：threatbook/xdr/ndr/all，默认all)
 
-#### 2.3 事件信息查询工具（依赖docs&data_demo/api_docs/XDR/事件信息查询和docs&data_demo/api_docs/XDR/事件详情查询）
+#### 2.3 事件信息查询工具（依赖2平台接口，优先级：XDR > NDR）
+- [ ] 实现XDR平台11个事件相关接口适配（事件列表/趋势/实体/举证/统计等，1选，事件生产平台信息最全）
+- [ ] 实现NDR平台3个事件相关接口适配（事件结果/搜索/时间线，2选，根据告警情况使用）
+- [ ] 实现多平台事件信息合并逻辑，返回统一格式的事件详情
+- [ ] 支持参数：event_id(必填), platform(可选：xdr/ndr/all，默认all)
 
-#### 2.4 告警及风险信息查询工具（依赖docs&data_demo/api_docs/XDR/告警信息查询和docs&data_demo/api_docs/XDR/风险资产查询）
+#### 2.4 告警及风险信息查询工具（依赖3平台接口，按需调用）
+- [ ] 实现XDR平台9个告警/风险/日志相关接口适配
+- [ ] 实现NDR平台33个威胁/态势/风险/调查相关接口适配
+- [ ] 实现Corplink平台3个安全告警相关接口适配
+- [ ] 实现多平台告警风险信息合并逻辑，返回统一格式的告警数据
+- [ ] 支持参数：asset_ip(可选), time_range(可选，默认24h), event_type(可选), platform(可选：xdr/ndr/corplink/all，默认all)
 
-#### 2.5 处置操作工具（依赖docs&data_demo/api_docs/XDR/处置操作和docs&data_demo/api_docs/XDR/白名单管理）
+#### 2.5 处置操作工具（依赖2平台接口，操作需安全校验）
+- [ ] 实现XDR平台9个处置/白名单相关接口适配
+- [ ] 实现NDR平台13个处置封禁/白名单相关接口适配（**只允许操作白名单，不允许操作资产**）
+- [ ] 实现操作安全校验逻辑（检查IP是否属于内部网段、目标资产是否为核心业务系统、操作影响范围评估）
+- [ ] 实现操作结果验证和失败回滚逻辑
+- [ ] 高风险操作自动触发HITL人工审核机制
+- [ ] 支持参数：action_type(必填：block/whitelist/quarantine/update_status), target(必填，目标信息), duration(可选，默认3600秒), platform(可选：xdr/ndr/all，默认xdr)
 
-#### 2.6 数据归档工具（依赖docs&data_demo/api_docs/XDR/事件信息查询和docs&data_demo/api_docs/DingtalkAITable/）
+#### 2.6 数据归档工具（依赖3平台接口，全流程自动化）
+- [ ] 实现XDR事件报告回写接口适配（优先使用，归档事件完整报告）
+- [ ] 实现XDR事件/告警处置状态回写接口适配
+- [ ] 实现钉钉AI表格数据同步接口适配
+- [ ] 实现ITSM工单创建接口适配
+- [ ] 支持参数：event_id(必填), data(必填，事件数据), archive_type(可选：xdr/dingtalk/itsm/all，默认all)
 
 #### 2.7 工具单元测试
 - [ ] 资产信息查询工具单元测试（tests/unit/tools/test_asset_query.py）
