@@ -105,13 +105,15 @@
 - [x] 支持参数：action_type(必填：block/aside_block/linkage_block/unblock/whitelist/remove_whitelist/update_status), target(必填), target_type(ip/domain/alert/incident), duration(可选), platform(xdr/ndr/all), verify_result(默认True), auto_rollback(默认True)
 - [x] 单元测试编写（tests/unit/tools/test_response_tool.py，47个测试用例全部通过，覆盖安全校验、XDR操作、NDR操作、主接口、查询函数、验证回滚、边界情况）
 
-#### 2.6 数据归档工具（依赖3平台接口，全流程自动化）
-- [ ] 实现XDR事件报告回写接口适配（优先使用，归档事件完整报告）
-- [ ] 实现XDR事件/告警处置状态回写接口适配
-- [ ] 实现钉钉AI表格数据同步接口适配
-- [ ] 实现ITSM工单创建接口适配
-- [ ] 支持参数：event_id(必填), data(必填，事件数据), archive_type(可选：xdr/dingtalk/itsm/all，默认all)
-- [ ] 单元测试编写（tests/unit/tools/test_data_archive.py，覆盖各平台归档接口调用）
+#### 2.6 数据归档工具（依赖3平台接口，全流程自动化）✅ 已完成
+- [x] 实现XDR事件报告回写接口适配（HMAC-SHA256签名认证，/api/xdr/v1/appstoreapp/longjiln-event-to-agent/callback/incident）
+- [x] 实现XDR事件/告警处置状态回写接口适配（复用response_tool逻辑）
+- [x] 实现钉钉AI表格数据同步接口适配（OAuth2认证，insertNotableRecords）
+- [x] 实现ITSM工单创建接口适配（Base64编码登录认证 + 工单创建API）
+- [x] 支持参数：archive_type(xdr/xdr_status/dingtalk/itsm/all), event_id(必填), event_data(必填), target_type(alert/incident), deal_status, comment
+- [x] 统一入口函数：data_archive()，支持并发执行多平台归档
+- [x] 便捷函数：xdr_writeback(), dingtalk_sync(), itsm_create_ticket()
+- [x] 单元测试编写（tests/unit/tools/test_data_archive_tool.py，31个测试用例全部通过）
 
 #### 2.7 工具集整体集成测试
 - [ ] 六大工具联动集成测试（tests/integration/test_tool_chain.py，验证工具调用链正确性）
