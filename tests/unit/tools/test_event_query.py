@@ -1,20 +1,20 @@
-\"\"\"事件信息查询工具单元测试\"\"\"
+"""事件信息查询工具单元测试"""
 import pytest
 from unittest.mock import AsyncMock, patch, MagicMock
 from tools.event_query_tool import event_query, _merge_event_results
 
 
 class TestEventQueryTool:
-    \"\"\"事件信息查询工具测试类\"\"\"
+    """事件信息查询工具测试类"""
 
     @pytest.mark.asyncio
-    @patch('tools.event_query_tool.settings')
+    @patch('tools.event_query_tool._get_config')
     @patch('tools.event_query_tool._query_xdr_event')
     @patch('tools.event_query_tool._query_ndr_event')
-    async def test_event_query_xdr_priority(self, mock_ndr, mock_xdr, mock_settings):
-        \"\"\"测试XDR平台优先查询\"\"\"
+    async def test_event_query_xdr_priority(self, mock_ndr, mock_xdr, mock_get_config):
+        """测试XDR平台优先查询"""
         # 模拟配置
-        mock_settings.tools = {
+        mock_get_config.return_value = {
             "xdr": {
                 "enabled": True,
                 "base_url": "https://xdr.example.com",
@@ -72,16 +72,17 @@ class TestEventQueryTool:
         mock_ndr.assert_called_once()
 
     @pytest.mark.asyncio
-    @patch('tools.event_query_tool.settings')
+    @patch('tools.event_query_tool._get_config')
     @patch('tools.event_query_tool._query_xdr_event')
-    async def test_event_query_specific_platform(self, mock_xdr, mock_settings):
-        \"\"\"测试指定平台查询\"\"\"
-        mock_settings.tools = {
+    async def test_event_query_specific_platform(self, mock_xdr, mock_get_config):
+        """测试指定平台查询"""
+        mock_get_config.return_value = {
             "xdr": {
                 "enabled": True,
                 "base_url": "https://xdr.example.com",
                 "api_key": "test-xdr-key"
-            }
+            },
+            "ndr": {"enabled": False, "base_url": "", "api_key": ""}
         }
 
         mock_xdr.return_value = {
@@ -103,7 +104,7 @@ class TestEventQueryTool:
         mock_xdr.assert_called_once()
 
     def test_merge_event_results_duplicate_id(self):
-        \"\"\"测试重复事件ID的合并逻辑\"\"\"
+        """测试重复事件ID的合并逻辑"""
         platform_results = {
             "xdr": {
                 "platform": "xdr",
@@ -143,7 +144,7 @@ class TestEventQueryTool:
         assert event["attack_type"] == "ransomware"
 
     def test_merge_event_results_no_data(self):
-        \"\"\"测试所有平台都没有数据的情况\"\"\"
+        """测试所有平台都没有数据的情况"""
         platform_results = {
             "xdr": {"error": "查询失败"},
             "ndr": {"error": "接口超时"}
@@ -155,31 +156,32 @@ class TestEventQueryTool:
         assert merged["confidence"] == 0
 
     @pytest.mark.asyncio
-    @patch('tools.event_query_tool.settings')
-    async def test_event_query_time_range(self, mock_settings):
-        \"\"\"测试时间范围参数传递\"\"\"
-        mock_settings.tools = {
+    @patch('tools.event_query_tool._get_config')
+    @patch('tools.event_query_tool._query_xdr_event')
+    async def test_event_query_time_range(self, mock_xdr, mock_get_config):
+        """测试时间范围参数传递"""
+        mock_get_config.return_value = {
             "xdr": {
                 "enabled": True,
                 "base_url": "https://xdr.example.com",
                 "api_key": "test-xdr-key"
-            }
+            },
+            "ndr": {"enabled": False, "base_url": "", "api_key": ""}
         }
 
-        with patch('tools.event_query_tool._query_xdr_event') as mock_xdr:
-            mock_xdr.return_value = {
-                "platform": "xdr",
-                "total": 0,
-                "events": []
-            }
+        mock_xdr.return_value = {
+            "platform": "xdr",
+            "total": 0,
+            "events": []
+        }
 
-            start_time = 1710000000
-            end_time = 1710086400
+        start_time = 1710000000
+        end_time = 1710086400
 
-            await event_query(start_time=start_time, end_time=end_time, platform="xdr")
+        await event_query(start_time=start_time, end_time=end_time, platform="xdr")
 
-            # 检查参数是否正确传递
-            call_args = mock_xdr.call_args
-            query_params = call_args[0][0]
-            assert query_params["start_time"] == start_time
-            assert query_params["end_time"] == end_time
+        # 检查参数是否正确传递
+        call_args = mock_xdr.call_args
+        query_params = call_args[0][0]
+        assert query_params["start_time"] == start_time
+        assert query_params["end_time"] == end_time

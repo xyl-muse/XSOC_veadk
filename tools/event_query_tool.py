@@ -6,6 +6,7 @@ import os
 import httpx
 from typing import Optional, Dict, Any, List
 import asyncio
+from google.adk.tools.tool_context import ToolContext
 
 
 def _get_config():
@@ -32,7 +33,7 @@ async def event_query(
     platform: str = "all",
     page: int = 1,
     page_size: int = 10,
-    tool_context = None,
+    tool_context: ToolContext = None,
 ) -> Dict[str, Any]:
     """
     事件信息查询工具
