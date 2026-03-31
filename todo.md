@@ -56,11 +56,11 @@
 - [x] XDR平台API接口文档放入docs&data_demo/api_docs/XDR/（JSON格式）
 - [x] NDR平台API接口文档放入docs&data_demo/api_docs/NDR/（JSON格式）
 - [x] Corplink平台API接口文档放入docs&data_demo/api_docs/corplink/（JSON格式）
-- [ ] 钉钉AI表格API接口文档放入docs&data_demo/api_docs/DingtalkAITable/
-- [ ] 微步在线威胁情报API接口文档放入docs&data_demo/api_docs/ThreatbookMCP/
-- [ ] CAASM资产管理系统接口文档放入docs&data_demo/api_docs/CAASM/
-- [ ] 资产云盘数据文档放入docs&data_demo/api_docs/CAASM/
-- [ ] ITSM工单系统接口文档放入docs&data_demo/api_docs/ITSM/
+- [ ] 钉钉AI表格API接口文档放入docs&data_demo/api_docs/DingtalkAITable/ (txt格式)
+- [ ] 微步在线威胁情报MCP文档放入docs&data_demo/api_docs/ThreatbookMCP/ (md格式)
+- [ ] 云盘资产查询接口文档放入docs&data_demo/api_docs/CAASM/云盘资产查询/ (py示例)
+- [ ] CAASM资产管理系统(产品fobrain)接口文档放入docs&data_demo/api_docs/CAASM/Fobrain/ (文档pdf+json)
+- [ ] ITSM工单系统接口文档放入docs&data_demo/api_docs/ITSM/ (py示例+md)
 - [ ] 按照各个工具的接口细则信息，筛选它属于六大主工具的哪一类，复制到对应位置(原接口文档不要动)，用于后续主工具构建
 - [ ] 根据主工具分类，完善todo2.2-2.7的子工具列举
 #### 2.1 资产信息查询工具（依赖docs&data_demo/api_docs/XDR/资产信息查询和docs&data_demo/api_docs/corplink/资产信息查询）
