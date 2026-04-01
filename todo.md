@@ -125,23 +125,25 @@
 > 📌 架构选型：父子智能体模式（SecurityEventOrchestrator作为协调父智能体）
 > 📌 详细设计依据：`flows/flow_plan.md`
 
-#### 3.1 Day 1: 协调智能体基础框架开发
-- [ ] 创建 flows/security_event_flow.py 主流程文件
-- [ ] SecurityEventOrchestrator 父智能体框架实现
-  - [ ] 继承VEADK Agent基类
-  - [ ] 注册四大子智能体（InvestigationAgent, TracingAgent, ResponseAgent, VisualizationAgent）
-  - [ ] 初始化状态机、重试计数器、熔断管理器
-- [ ] 事件状态机设计与实现
-  - [ ] 定义15种事件状态（PENDING, VALIDATING, INVESTIGATING, FALSE_POSITIVE, TRACING, PROCESSING, VALIDATING_DISPOSAL, PENDING_APPROVAL, EXECUTING_DISPOSAL, VERIFYING_DISPOSAL, VISUALIZING, ARCHIVING, COMPLETED, FAILED, CLOSED）
-  - [ ] 实现状态流转规则（只能向前流转或回退到上一节点）
-  - [ ] 状态变更日志记录与审计
-- [ ] 主流程控制逻辑实现
-  - [ ] Step 1: 事件接收与格式校验
-  - [ ] Step 2: 事件研判调度（误报/可疑/真实事件分支处理）
-  - [ ] Step 3: 溯源分析调度（循环溯源逻辑、发现新线索回退研判）
-  - [ ] Step 4: 风险处置调度（高风险操作人工审核判断）
-  - [ ] Step 5: 数据可视化与归档调度
-  - [ ] 异常捕获与状态转换
+#### 3.1 Day 1: 协调智能体基础框架开发 ✅（已完成）
+- [x] 创建 flows/security_event_flow.py 主流程文件
+- [x] SecurityEventOrchestrator 父智能体框架实现
+  - [x] 继承VEADK Agent基类
+  - [x] 注册四大子智能体（InvestigationAgent, TracingAgent, ResponseAgent, VisualizationAgent）
+  - [x] 初始化状态机、重试计数器、熔断管理器
+- [x] 事件状态机设计与实现
+  - [x] 定义15种事件状态（PENDING, VALIDATING, INVESTIGATING, FALSE_POSITIVE, TRACING, PROCESSING, VALIDATING_DISPOSAL, PENDING_APPROVAL, EXECUTING_DISPOSAL, VERIFYING_DISPOSAL, VISUALIZING, ARCHIVING, COMPLETED, FAILED, CLOSED）
+  - [x] 实现状态流转规则（只能向前流转或回退到上一节点）
+  - [x] 状态变更日志记录与审计
+- [x] 主流程控制逻辑实现
+  - [x] Step 0: 事件接收与格式校验
+  - [x] Step 1: 事件研判调度（误报/可疑/真实事件分支处理）
+  - [x] Step 2: 溯源分析调度（循环溯源逻辑、发现新线索回退研判）
+  - [x] Step 3: 风险处置调度（高风险操作人工审核判断）
+  - [x] Step 4: 数据可视化与归档调度
+  - [x] 异常捕获与状态转换
+- [x] 人工干预接口实现（approve/reject/close/modify_and_continue）
+- [x] 扩展 schemas/security_event.py 的 EventStatus 枚举至15种状态
 
 #### 3.2 Day 2: 异常处理和人工干预实现
 - [ ] 重试机制实现

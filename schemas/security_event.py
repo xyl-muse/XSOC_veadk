@@ -49,31 +49,61 @@ class EventType(str, Enum):
 
 
 class EventStatus(str, Enum):
-    """事件状态枚举"""
-    PENDING = "pending"
-    INVESTIGATING = "investigating"
-    TRACING = "tracing"
-    RESPONDING = "responding"
-    VISUALIZING = "visualizing"
-    ARCHIVED = "archived"
-    COMPLETED = "completed"
-    FAILED = "failed"
-    FALSE_POSITIVE = "false_positive"
-    PENDING_MANUAL_CONFIRM = "pending_manual_confirm"
+    """事件状态枚举（15种状态，覆盖全流程场景）"""
+    # 初始阶段
+    PENDING = "pending"                      # 待处理
+    VALIDATING = "validating"                # 格式校验中
+
+    # 研判阶段
+    INVESTIGATING = "investigating"          # 研判中
+    FALSE_POSITIVE = "false_positive"        # 误报
+
+    # 溯源阶段
+    TRACING = "tracing"                      # 溯源中
+
+    # 处置阶段
+    PROCESSING = "processing"                # 处置中（策略生成）
+    VALIDATING_DISPOSAL = "validating_disposal"  # 处置校验中
+    PENDING_APPROVAL = "pending_approval"    # 待人工审核
+    EXECUTING_DISPOSAL = "executing_disposal"    # 处置执行中
+    VERIFYING_DISPOSAL = "verifying_disposal"    # 处置验证中
+
+    # 归档阶段
+    VISUALIZING = "visualizing"              # 报告生成中
+    ARCHIVING = "archiving"                  # 归档中
+
+    # 终态
+    COMPLETED = "completed"                  # 已完成
+    FAILED = "failed"                        # 处理失败
+    CLOSED = "closed"                        # 已关闭（人工关闭）
+
+    # 兼容旧状态（已废弃，保留向后兼容）
+    RESPONDING = "responding"                # 废弃：使用 PROCESSING
+    ARCHIVED = "archived"                    # 废弃：使用 COMPLETED
+    PENDING_MANUAL_CONFIRM = "pending_manual_confirm"  # 废弃：使用 PENDING_APPROVAL
 
     @property
     def display_name(self) -> str:
         """中文名称"""
         name_map = {
             self.PENDING: "待处理",
+            self.VALIDATING: "格式校验中",
             self.INVESTIGATING: "研判中",
+            self.FALSE_POSITIVE: "误报",
             self.TRACING: "溯源中",
-            self.RESPONDING: "处置中",
+            self.PROCESSING: "处置中",
+            self.VALIDATING_DISPOSAL: "处置校验中",
+            self.PENDING_APPROVAL: "待人工审核",
+            self.EXECUTING_DISPOSAL: "处置执行中",
+            self.VERIFYING_DISPOSAL: "处置验证中",
             self.VISUALIZING: "报告生成中",
-            self.ARCHIVED: "已归档",
+            self.ARCHIVING: "归档中",
             self.COMPLETED: "已完成",
             self.FAILED: "处理失败",
-            self.FALSE_POSITIVE: "误报",
+            self.CLOSED: "已关闭",
+            # 兼容旧状态
+            self.RESPONDING: "处置中",
+            self.ARCHIVED: "已归档",
             self.PENDING_MANUAL_CONFIRM: "待人工确认",
         }
         return name_map.get(self, "未知状态")
