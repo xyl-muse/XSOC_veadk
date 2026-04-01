@@ -3,13 +3,15 @@
 基于VEADK父子智能体模式实现全流程闭环调度
 """
 from veadk import Agent
-from typing import Dict, Any, Optional, List, Callable
+from typing import Dict, Any, Optional, List, Callable, Set
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, timedelta
 from dataclasses import dataclass, field
 import asyncio
 import uuid
 import logging
+import time
+from collections import defaultdict
 
 from agents import (
     InvestigationAgent,
@@ -18,6 +20,177 @@ from agents import (
     VisualizationAgent,
 )
 from schemas.security_event import SecurityEvent, EventStatus
+
+
+# ============================================================================
+# 异常类型定义
+# ============================================================================
+
+class RetryableError(Exception):
+    """可重试错误：网络超时、接口限流、临时服务不可用"""
+    pass
+
+
+class NonRetryableError(Exception):
+    """不可重试错误：参数错误、权限不足、数据不存在"""
+    pass
+
+
+class CircuitBreakerError(Exception):
+    """熔断错误：服务熔断，拒绝请求"""
+    pass
+
+
+class AgentTimeoutError(Exception):
+    """智能体超时错误：智能体或工具执行超时"""
+    pass
+
+
+# ============================================================================
+# 熔断器实现
+# ============================================================================
+
+@dataclass
+class CircuitBreakerStats:
+    """熔断器统计信息"""
+    failure_count: int = 0
+    success_count: int = 0
+    last_failure_time: Optional[float] = None
+    state: str = "closed"  # closed, open, half_open
+
+
+class CircuitBreaker:
+    """
+    熔断器
+    防止级联故障，当错误率达到阈值时熔断
+    """
+
+    def __init__(
+        self,
+        failure_threshold: int = 5,
+        recovery_timeout: int = 60,
+        success_threshold: int = 3,
+    ):
+        """
+        Args:
+            failure_threshold: 失败次数阈值，触发熔断
+            recovery_timeout: 熔断恢复超时时间（秒）
+            success_threshold: 半开状态下成功次数阈值，恢复熔断
+        """
+        self.failure_threshold = failure_threshold
+        self.recovery_timeout = recovery_timeout
+        self.success_threshold = success_threshold
+
+        # 按服务名存储熔断状态
+        self._stats: Dict[str, CircuitBreakerStats] = defaultdict(CircuitBreakerStats)
+        self.logger = logging.getLogger(__name__)
+
+    def is_available(self, service_name: str) -> bool:
+        """检查服务是否可用"""
+        stats = self._stats[service_name]
+
+        if stats.state == "closed":
+            return True
+
+        if stats.state == "open":
+            # 检查是否可以进入半开状态
+            if stats.last_failure_time and \
+               time.time() - stats.last_failure_time > self.recovery_timeout:
+                stats.state = "half_open"
+                self.logger.info(f"[熔断器] 服务 {service_name} 进入半开状态")
+                return True
+            return False
+
+        # half_open 状态允许尝试
+        return True
+
+    def record_success(self, service_name: str):
+        """记录成功"""
+        stats = self._stats[service_name]
+        stats.success_count += 1
+
+        if stats.state == "half_open":
+            if stats.success_count >= self.success_threshold:
+                # 半开状态下成功次数达标，恢复熔断
+                stats.state = "closed"
+                stats.failure_count = 0
+                stats.success_count = 0
+                self.logger.info(f"[熔断器] 服务 {service_name} 熔断恢复")
+
+    def record_failure(self, service_name: str):
+        """记录失败"""
+        stats = self._stats[service_name]
+        stats.failure_count += 1
+        stats.last_failure_time = time.time()
+
+        if stats.state == "half_open":
+            # 半开状态下失败，立即熔断
+            stats.state = "open"
+            self.logger.warning(f"[熔断器] 服务 {service_name} 半开状态失败，重新熔断")
+
+        elif stats.state == "closed":
+            if stats.failure_count >= self.failure_threshold:
+                # 失败次数达标，触发熔断
+                stats.state = "open"
+                self.logger.warning(
+                    f"[熔断器] 服务 {service_name} 触发熔断，"
+                    f"失败次数: {stats.failure_count}"
+                )
+
+    def get_stats(self, service_name: str) -> Dict[str, Any]:
+        """获取熔断器统计信息"""
+        stats = self._stats[service_name]
+        return {
+            "service_name": service_name,
+            "state": stats.state,
+            "failure_count": stats.failure_count,
+            "success_count": stats.success_count,
+            "last_failure_time": stats.last_failure_time
+        }
+
+
+# ============================================================================
+# 降级策略
+# ============================================================================
+
+class DegradationStrategy:
+    """
+    降级策略
+    当服务不可用时，自动降级到备选方案
+    """
+
+    def __init__(self):
+        # 平台降级映射
+        self.platform_fallback = {
+            "all": ["xdr", "ndr", "corplink"],
+            "xdr": ["ndr"],
+            "ndr": ["xdr"],
+            "threatbook": ["xdr", "ndr"],
+        }
+
+        # 工具降级映射
+        self.tool_fallback = {
+            "threat_intel_query": ["asset_query", "alert_risk_query"],
+            "event_query": ["alert_risk_query"],
+        }
+
+        self.logger = logging.getLogger(__name__)
+
+    def get_fallback_platform(self, platform: str, tried_platforms: Set[str]) -> Optional[str]:
+        """获取降级平台"""
+        candidates = self.platform_fallback.get(platform, [])
+
+        for candidate in candidates:
+            if candidate not in tried_platforms:
+                self.logger.info(f"[降级] 平台降级: {platform} -> {candidate}")
+                return candidate
+
+        return None
+
+    def get_fallback_tool(self, tool_name: str) -> Optional[str]:
+        """获取降级工具"""
+        fallbacks = self.tool_fallback.get(tool_name, [])
+        return fallbacks[0] if fallbacks else None
 
 
 # ============================================================================
@@ -219,11 +392,46 @@ class SecurityEventOrchestrator(Agent):
             "max_delay": 8.0,
         }
 
+        # 熔断器配置
+        self.circuit_breaker = CircuitBreaker(
+            failure_threshold=5,
+            recovery_timeout=60,
+            success_threshold=3
+        )
+
+        # 降级策略
+        self.degradation_strategy = DegradationStrategy()
+
+        # 超时配置
+        self.timeout_config = {
+            "agent_timeout": 300,  # 智能体超时时间（秒）
+            "tool_timeout": 30,     # 工具调用超时时间（秒）
+        }
+
+        # 并发控制
+        self.concurrent_limit = 100  # 最大并发事件数
+        self.active_events: Set[str] = set()
+
         # 重试计数器
         self.retry_count: Dict[str, int] = {}
 
         # 待人工审核队列
         self.pending_approval: Dict[str, Dict[str, Any]] = {}
+
+        # 回滚操作记录
+        self.rollback_records: Dict[str, List[Dict[str, Any]]] = {}
+
+        # 可重试错误类型
+        self.retryable_errors = {
+            "TimeoutError", "ConnectionError", "HTTPError",
+            "RetryableError", "asyncio.TimeoutError"
+        }
+
+        # 不可重试错误类型
+        self.non_retryable_errors = {
+            "ValueError", "KeyError", "PermissionError",
+            "NonRetryableError", "AuthenticationError"
+        }
 
         self.logger = logging.getLogger(__name__)
 
@@ -238,6 +446,14 @@ class SecurityEventOrchestrator(Agent):
         if not event_id:
             return {"status": "failed", "error": "无法提取事件ID"}
 
+        # 并发控制
+        if not await self._acquire_event_slot(event_id):
+            return {
+                "status": "failed",
+                "event_id": event_id,
+                "error": "系统繁忙，已达到最大并发数"
+            }
+
         # 初始化状态机
         self.state_machine.init_event(event_id)
 
@@ -251,7 +467,12 @@ class SecurityEventOrchestrator(Agent):
                 self.state_machine.transition(
                     event_id, EventState.FAILED, "格式校验失败"
                 )
-                return {"status": "failed", "event_id": event_id, "error": "事件格式校验失败"}
+                # 失败也进入归档
+                return await self._handle_archive(
+                    event_id, 
+                    {"event_data": event_data, "error": "事件格式校验失败"},
+                    trace_id
+                )
 
             # ========== Step 1: 事件研判 ==========
             self.state_machine.transition(
@@ -311,12 +532,12 @@ class SecurityEventOrchestrator(Agent):
                     event_id, tracing_result, "response", trace_id
                 )
 
-            # 执行处置
+            # 执行处置（带回滚支持）
             self.state_machine.transition(
                 event_id, EventState.EXECUTING_DISPOSAL, "安全校验通过，开始执行处置"
             )
-            response_result = await self._execute_with_retry(
-                "response_agent", tracing_result, event_id, trace_id
+            response_result = await self._execute_with_rollback(
+                event_id, "response_agent", tracing_result, trace_id
             )
 
             # 处置验证
@@ -337,12 +558,29 @@ class SecurityEventOrchestrator(Agent):
             # ========== Step 4: 数据可视化与归档 ==========
             return await self._handle_archive(event_id, response_result, trace_id)
 
+        except CircuitBreakerError as e:
+            self.logger.error(f"[Flow] 熔断错误: {event_id}, 错误: {str(e)}")
+            self.state_machine.transition(
+                event_id, EventState.FAILED, f"服务熔断: {str(e)}"
+            )
+            # 熔断错误也进入归档
+            return await self._handle_archive(
+                event_id,
+                {"event_data": event_data, "error": str(e)},
+                trace_id
+            )
+
         except Exception as e:
             self.logger.error(f"[Flow] 流程异常: {event_id}, 错误: {str(e)}")
             self.state_machine.transition(
                 event_id, EventState.FAILED, f"流程异常: {str(e)}"
             )
-            return {"status": "failed", "event_id": event_id, "error": str(e)}
+            # 异常也进入归档，确保数据完整性
+            return await self._handle_archive(
+                event_id,
+                {"event_data": event_data, "error": str(e)},
+                trace_id
+            )
 
     async def _validate_event(self, event_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """事件格式校验"""
@@ -364,12 +602,24 @@ class SecurityEventOrchestrator(Agent):
         """
         带重试机制的智能体执行
         指数退避重试：1s, 2s, 4s, 8s，最多3次
+        支持熔断器、超时控制、错误类型识别
         """
+        # 1. 熔断器检查
+        if not self.circuit_breaker.is_available(agent_name):
+            self.logger.warning(f"[Flow] 熔断器拒绝请求: {agent_name}")
+            # 尝试降级
+            fallback_result = await self._try_fallback(agent_name, data, event_id, trace_id)
+            if fallback_result:
+                return fallback_result
+            raise CircuitBreakerError(f"服务 {agent_name} 已熔断")
+
         max_retries = self.retry_config["max_retries"]
         base_delay = self.retry_config["base_delay"]
+        timeout = self.timeout_config["agent_timeout"]
 
         retry_key = f"{event_id}:{agent_name}"
         self.retry_count[retry_key] = 0
+        last_error = None
 
         for attempt in range(max_retries + 1):
             try:
@@ -378,15 +628,58 @@ class SecurityEventOrchestrator(Agent):
                     f"事件: {event_id}, 尝试: {attempt + 1}/{max_retries + 1}"
                 )
 
-                result = await self.call_agent(agent_name, data)
+                # 带超时控制的智能体调用
+                result = await asyncio.wait_for(
+                    self.call_agent(agent_name, data),
+                    timeout=timeout
+                )
 
-                # 成功则清除重试计数
+                # 成功则清除重试计数，记录成功
                 self.retry_count.pop(retry_key, None)
+                self.circuit_breaker.record_success(agent_name)
                 return result
 
-            except Exception as e:
+            except asyncio.TimeoutError as e:
+                last_error = e
+                self.logger.error(f"[Flow] 智能体执行超时: {agent_name}, 超时时间: {timeout}s")
+                self.circuit_breaker.record_failure(agent_name)
                 self.retry_count[retry_key] = attempt + 1
 
+                # 超时错误可重试
+                if attempt < max_retries:
+                    delay = min(base_delay * (2 ** attempt), self.retry_config["max_delay"])
+                    self.logger.warning(f"[Flow] {delay}秒后重试")
+                    await asyncio.sleep(delay)
+                else:
+                    # 重试失败，尝试降级
+                    fallback_result = await self._try_fallback(agent_name, data, event_id, trace_id)
+                    if fallback_result:
+                        return fallback_result
+                    raise AgentTimeoutError(f"智能体 {agent_name} 执行超时，已达最大重试次数")
+
+            except Exception as e:
+                last_error = e
+                error_type = type(e).__name__
+                self.circuit_breaker.record_failure(agent_name)
+                self.retry_count[retry_key] = attempt + 1
+
+                # 判断是否可重试
+                if error_type in self.non_retryable_errors:
+                    self.logger.error(
+                        f"[Flow] 不可重试错误: {agent_name}, "
+                        f"错误类型: {error_type}, 错误: {str(e)}"
+                    )
+                    raise NonRetryableError(f"不可重试错误: {str(e)}")
+
+                if error_type not in self.retryable_errors:
+                    # 未知错误类型，保守起见不重试
+                    self.logger.error(
+                        f"[Flow] 未知错误类型，不重试: {agent_name}, "
+                        f"错误类型: {error_type}, 错误: {str(e)}"
+                    )
+                    raise
+
+                # 可重试错误
                 if attempt < max_retries:
                     # 计算退避时间
                     delay = min(base_delay * (2 ** attempt), self.retry_config["max_delay"])
@@ -400,10 +693,41 @@ class SecurityEventOrchestrator(Agent):
                         f"[Flow] 智能体执行失败，已达最大重试次数: "
                         f"{agent_name}, 错误: {str(e)}"
                     )
-                    raise
+                    # 重试失败，尝试降级
+                    fallback_result = await self._try_fallback(agent_name, data, event_id, trace_id)
+                    if fallback_result:
+                        return fallback_result
+                    raise RetryableError(f"智能体 {agent_name} 执行失败，已达最大重试次数")
 
         # 不应该到达这里
         raise RuntimeError(f"智能体执行失败: {agent_name}")
+
+    async def _try_fallback(
+        self,
+        agent_name: str,
+        data: Dict[str, Any],
+        event_id: str,
+        trace_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        尝试降级策略
+        当智能体不可用时，尝试使用备选方案
+        """
+        self.logger.info(f"[Flow] 尝试降级策略: {agent_name}")
+
+        # 对于处置智能体，可以降级为仅通知
+        if agent_name == "response_agent":
+            self.logger.info(f"[Flow] 降级：跳过处置，直接归档")
+            return {
+                "event_id": event_id,
+                "result": "处置降级",
+                "reason": "处置智能体不可用，已跳过处置直接归档",
+                "event_data": data
+            }
+
+        # 对于其他智能体，记录降级事件并转人工
+        self.logger.warning(f"[Flow] 无可用降级方案，转人工处理: {agent_name}")
+        return None
 
     async def call_agent(self, agent_name: str, data: Dict[str, Any]) -> Dict[str, Any]:
         """调用子智能体"""
@@ -668,6 +992,238 @@ class SecurityEventOrchestrator(Agent):
             ],
             "created_at": record.created_at,
             "updated_at": record.updated_at
+        }
+
+    # ========================================================================
+    # 回滚机制
+    # ========================================================================
+
+    async def _execute_with_rollback(
+        self,
+        event_id: str,
+        agent_name: str,
+        data: Dict[str, Any],
+        trace_id: str
+    ) -> Dict[str, Any]:
+        """
+        带回滚机制的智能体执行
+        记录操作以便回滚
+        """
+        # 记录回滚信息
+        rollback_record = {
+            "agent_name": agent_name,
+            "data": data,
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "trace_id": trace_id
+        }
+
+        if event_id not in self.rollback_records:
+            self.rollback_records[event_id] = []
+        self.rollback_records[event_id].append(rollback_record)
+
+        try:
+            result = await self._execute_with_retry(agent_name, data, event_id, trace_id)
+            return result
+        except Exception as e:
+            # 执行失败，触发回滚
+            self.logger.error(f"[Flow] 执行失败，触发回滚: {event_id}, 错误: {str(e)}")
+            await self._rollback_event(event_id, trace_id)
+            raise
+
+    async def _rollback_event(self, event_id: str, trace_id: str):
+        """
+        回滚事件的所有操作
+        """
+        records = self.rollback_records.get(event_id, [])
+        if not records:
+            self.logger.info(f"[Flow] 无需回滚，没有操作记录: {event_id}")
+            return
+
+        self.logger.info(f"[Flow] 开始回滚事件: {event_id}, 操作数: {len(records)}")
+
+        # 反向执行回滚
+        for record in reversed(records):
+            agent_name = record["agent_name"]
+            data = record["data"]
+
+            try:
+                # 对于处置智能体，需要执行反向操作
+                if agent_name == "response_agent":
+                    await self._rollback_response_operations(event_id, data, trace_id)
+                
+                self.logger.info(
+                    f"[Flow] 回滚操作成功: {event_id}, "
+                    f"智能体: {agent_name}"
+                )
+            except Exception as e:
+                self.logger.error(
+                    f"[Flow] 回滚操作失败: {event_id}, "
+                    f"智能体: {agent_name}, 错误: {str(e)}"
+                )
+
+        # 清除回滚记录
+        del self.rollback_records[event_id]
+
+    async def _rollback_response_operations(
+        self,
+        event_id: str,
+        data: Dict[str, Any],
+        trace_id: str
+    ):
+        """
+        回滚处置操作
+        """
+        execution_result = data.get("execution_result", {})
+        operations = execution_result.get("operations", [])
+
+        for operation in operations:
+            op_name = operation.get("operation")
+            if op_name == "IP封禁":
+                # 执行解封操作
+                attack_source_ip = data.get("attack_source_ip")
+                if attack_source_ip:
+                    try:
+                        await self.call_tool(
+                            "response_action",
+                            {
+                                "action_type": "unblock",
+                                "target": attack_source_ip,
+                                "target_type": "ip",
+                                "platform": "all",
+                                "comment": f"XSOC自动回滚 - 事件ID: {event_id}"
+                            }
+                        )
+                    except Exception as e:
+                        self.logger.error(f"[Flow] IP解封失败: {str(e)}")
+
+            elif op_name == "终端隔离":
+                # 执行解封操作
+                target_asset_ip = data.get("target_asset_ip")
+                if target_asset_ip:
+                    try:
+                        await self.call_tool(
+                            "response_action",
+                            {
+                                "action_type": "unblock",
+                                "target": target_asset_ip,
+                                "target_type": "ip",
+                                "platform": "xdr",
+                                "comment": f"XSOC自动回滚终端解封 - 事件ID: {event_id}"
+                            }
+                        )
+                    except Exception as e:
+                        self.logger.error(f"[Flow] 终端解封失败: {str(e)}")
+
+    async def call_tool(self, tool_name: str, params: Dict[str, Any]) -> Dict[str, Any]:
+        """调用工具（需要实现）"""
+        # 这里应该调用实际的工具
+        # 由于工具是异步函数，这里提供简化实现
+        # 实际使用时应该从 tools 模块导入并调用
+        self.logger.info(f"[Flow] 调用工具: {tool_name}, 参数: {params}")
+        return {"success": True, "message": "工具调用成功"}
+
+    # ========================================================================
+    # 并发控制
+    # ========================================================================
+
+    async def _check_concurrency(self) -> bool:
+        """检查并发限制"""
+        return len(self.active_events) < self.concurrent_limit
+
+    async def _acquire_event_slot(self, event_id: str) -> bool:
+        """获取事件处理槽位"""
+        if await self._check_concurrency():
+            self.active_events.add(event_id)
+            return True
+        return False
+
+    async def _release_event_slot(self, event_id: str):
+        """释放事件处理槽位"""
+        self.active_events.discard(event_id)
+
+    # ========================================================================
+    # 统一归档入口
+    # ========================================================================
+
+    async def _handle_archive(
+        self,
+        event_id: str,
+        result: Dict[str, Any],
+        trace_id: str
+    ) -> Dict[str, Any]:
+        """
+        统一归档入口
+        确保所有事件路径最终都进入归档流程
+        """
+        # 确保结果包含事件数据
+        event_data = result.get("event_data", result)
+
+        # 更新状态为报告生成中
+        self.state_machine.transition(
+            event_id, EventState.VISUALIZING, "开始生成报告"
+        )
+
+        # 调用可视化智能体
+        try:
+            archive_result = await self._execute_with_retry(
+                "visualization_agent", event_data, event_id, trace_id
+            )
+        except Exception as e:
+            self.logger.error(f"[Flow] 归档失败: {event_id}, 错误: {str(e)}")
+            # 即使归档失败，也要确保数据完整性
+            archive_result = {
+                "success": False,
+                "error": str(e),
+                "event_data": event_data
+            }
+
+        # 更新状态为归档中
+        self.state_machine.transition(
+            event_id, EventState.ARCHIVING, "开始归档"
+        )
+
+        # 确保归档数据完整性
+        archive_data = {
+            "event_id": event_id,
+            "trace_id": trace_id,
+            "event_data": event_data,
+            "process_result": result,
+            "archive_result": archive_result,
+            "archive_timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+
+        # 执行归档操作（调用数据归档工具）
+        try:
+            await self.call_tool(
+                "data_archive",
+                {
+                    "archive_type": "all",
+                    "event_id": event_id,
+                    "event_data": archive_data
+                }
+            )
+        except Exception as e:
+            self.logger.error(f"[Flow] 数据归档工具调用失败: {str(e)}")
+
+        # 更新状态为已完成
+        self.state_machine.transition(
+            event_id, EventState.COMPLETED, "全流程处理完成"
+        )
+
+        # 释放并发槽位
+        await self._release_event_slot(event_id)
+
+        # 清理回滚记录
+        if event_id in self.rollback_records:
+            del self.rollback_records[event_id]
+
+        return {
+            "status": "completed",
+            "event_id": event_id,
+            "trace_id": trace_id,
+            "final_state": self.state_machine.get_state(event_id).value,
+            "result": archive_result,
+            "archive_data": archive_data
         }
 
 

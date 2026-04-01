@@ -1,6 +1,6 @@
 """数据可视化专家智能体"""
 from veadk import Agent
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from schemas.security_event import SecurityEvent, EventStatus
 import json
 from datetime import datetime
@@ -14,6 +14,11 @@ class VisualizationAgent(Agent):
     name: str = "visualization_agent"
     display_name: str = "数据可视化专家"
     description: str = "负责事件报告生成、XDR数据回写和钉钉AI表格同步"
+
+    # 可用工具列表
+    tools: List[str] = [
+        "data_archive",          # 数据归档（XDR回写、钉钉同步、ITSM工单）
+    ]
 
     instruction: str = """
 你是资深安全数据可视化专家，负责安全事件的报告生成、XDR系统数据回写和钉钉AI表格同步工作。你的职责是：

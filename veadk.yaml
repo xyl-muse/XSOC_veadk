@@ -37,10 +37,9 @@ agents:
     max_retry: 3
     tools: [
       "threat_intel_query",
-      "xdr_event_query",
+      "event_query",
       "asset_query",
-      "ndr_alert_query",
-      "edr_alert_query"
+      "alert_risk_query"
     ]
 
   # 溯源分析专家
@@ -50,11 +49,9 @@ agents:
     max_retry: 3
     tools: [
       "threat_intel_query",
-      "xdr_event_query",
+      "event_query",
       "asset_query",
-      "ndr_alert_query",
-      "edr_alert_query",
-      "xdr_evidence_query"
+      "alert_risk_query"
     ]
 
   # 风险处置专家
@@ -63,9 +60,10 @@ agents:
     llm_model: gpt-4o
     max_retry: 2
     tools: [
-      "ndr_ip_block",
-      "edr_isolate_host",
-      "dingtalk_notify"
+      "response_action",
+      "alert_risk_query",
+      "asset_query",
+      "data_archive"
     ]
 
   # 数据可视化专家
@@ -74,8 +72,7 @@ agents:
     llm_model: gpt-3.5-turbo
     max_retry: 2
     tools: [
-      "xdr_event_archive",
-      "dingtalk_table_write"
+      "data_archive"
     ]
 
 # 工具全局配置

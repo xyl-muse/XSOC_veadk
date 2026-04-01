@@ -96,9 +96,12 @@ docs&data_demo/api_docs/CAASM/assets_data.json
 docs&data_demo/api_docs/CAASM/云盘资产信息原脚本.py
 
 
-#所有数据化的原始文档剔除
+# 所有数据化的原始文档剔除
 *.zip
 *.pdf
 *.xlsx
 *.doc
 *.docx
+
+# 项目深化理解和追踪文档
+dev_study_log.md

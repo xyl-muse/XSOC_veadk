@@ -1,6 +1,6 @@
 """溯源分析专家智能体"""
 from veadk import Agent
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from schemas.security_event import SecurityEvent, EventStatus
 
 
@@ -12,6 +12,14 @@ class TracingAgent(Agent):
     name: str = "tracing_agent"
     display_name: str = "溯源分析专家"
     description: str = "负责对真实攻击事件进行深度调查，还原攻击路径，提取攻击线索"
+
+    # 可用工具列表
+    tools: List[str] = [
+        "threat_intel_query",    # 威胁情报查询
+        "asset_query",           # 资产信息查询
+        "event_query",           # 事件信息查询
+        "alert_risk_query",      # 告警风险查询
+    ]
 
     # 智能体系统提示词
     instruction: str = """
