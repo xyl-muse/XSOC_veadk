@@ -191,13 +191,139 @@
 - [x] 修复 _execute_with_rollback 参数调用错误
 - [x] 集成测试文件完善（tests/integration/test_security_event_flow.py，37个测试用例全部通过）
 ---
-### Phase 4: 测试与上线（预计3天）
-#### 4.1 测试用例开发
-- [ ] 智能体单元测试
-- [ ] 工具单元测试
-- [ ] 全流程集成测试
+### Phase 4: 项目关联变量及真实数据准备（预计2天）
+> 📌 本阶段目标：准备所有外部系统的真实API凭证和配置，确保实测上线阶段能正常调用
+
+#### 4.1 LLM模型配置（核心依赖）
+- [ ] **VEADK框架模型配置**
+  - [ ] `MODEL_AGENT_NAME` - 模型名称（如：doubao-pro-32k）
+  - [ ] `MODEL_AGENT_PROVIDER` - 模型提供商（如：volcengine）
+  - [ ] `MODEL_AGENT_API_BASE` - 模型API地址
+  - [ ] `MODEL_AGENT_API_KEY` - 模型API密钥
+
+#### 4.2 威胁情报平台配置
+- [ ] **微步在线（Threatbook）- 优先级最高**
+  - [ ] `THREATBOOK_ENABLED` - 是否启用（默认true）
+  - [ ] `THREATBOOK_BASE_URL` - API地址（默认：https://api.threatbook.cn/v3）
+  - [ ] `THREAT_BOOK_API_KEY` 或 `THREATBOOK_API_KEY` - API密钥
+
+#### 4.3 XDR安全运营平台配置
+- [ ] **XDR平台 - 核心数据源**
+  - [ ] `XDR_ENABLED` - 是否启用（默认true）
+  - [ ] `XDR_API_BASE_URL` 或 `XDR_BASE_URL` - API地址
+  - [ ] `XDR_API_KEY` - auth_code认证码（用于HMAC-SHA256签名）
+  - [ ] `XDR_HOST` - XDR主机地址
+
+#### 4.4 NDR网络检测响应平台配置
+- [ ] **NDR平台 - 网络流量分析**
+  - [ ] `NDR_ENABLED` - 是否启用（默认true）
+  - [ ] `NDR_API_BASE_URL` 或 `NDR_BASE_URL` - API地址
+  - [ ] `NDR_API_KEY` - API密钥
+  - [ ] `NDR_API_SECRET` - API密钥密文（用于HMAC签名）
+
+#### 4.5 资产管理系统配置
+- [ ] **CAASM/云盘资产 - 服务器资产（优先级最高）**
+  - [ ] `CAASM_ENABLED` - 是否启用（默认true）
+  - [ ] `CAASM_BASE_URL` 或 `ASSET_API_BASE_URL` - API地址
+  - [ ] `CAASM_API_KEY` 或 `ASSET_API_KEY` 或 `FOBRAIN_API_KEY` - API密钥
+  - [ ] `CLOUD_STORAGE_DATA` - 云盘资产JSON数据（可选，从assets_data.json读取）
+
+- [ ] **Corplink - 办公终端资产**
+  - [ ] `CORPLINK_ENABLED` - 是否启用（默认true）
+  - [ ] `CORPLINK_BASE_URL` - API地址
+  - [ ] `CORPLINK_API_KEY` - API密钥
+
+#### 4.6 数据归档平台配置
+- [ ] **钉钉AI表格 - 事件数据同步**
+  - [ ] `DINGTALK_ENABLED` - 是否启用（默认true）
+  - [ ] `DINGTALK_CLIENT_ID` 或 `DINGTALK_Client_ID` - OAuth2客户端ID
+  - [ ] `DINGTALK_CLIENT_SECRET` 或 `DINGTALK_Client_Secret` - OAuth2客户端密钥
+  - [ ] `DINGTALK_TABLE_ID` - AI表格ID
+
+- [ ] **ITSM工单系统 - 工单创建**
+  - [ ] `ITSM_ENABLED` - 是否启用（默认true）
+  - [ ] `ITSM_BASE_URL` - API地址
+  - [ ] `ITSM_USER` - 登录用户名
+  - [ ] `ITSM_PASSWORD` - 登录密码
+  - [ ] `ITSM_REQUEST_USERID` - 请求用户ID
+  - [ ] `ITSM_CTI` - 工单分类ID（默认：68fca869c7814cdbbe9dff32ff0ab9ea）
+
+#### 4.7 安全校验配置
+- [ ] **处置操作安全校验**
+  - [ ] `INTERNAL_NETWORKS` - 内部网段列表（默认：10.0.0.0/8,172.16.0.0/12,192.168.0.0/16）
+  - [ ] `CORE_SYSTEMS` - 核心业务系统IP列表（逗号分隔）
+
+#### 4.8 环境变量配置清单汇总
+
+| 分类 | 环境变量 | 必填 | 默认值 | 说明 |
+|------|----------|------|--------|------|
+| **LLM** | MODEL_AGENT_NAME | ✅ | - | 模型名称 |
+| | MODEL_AGENT_PROVIDER | ✅ | - | 模型提供商 |
+| | MODEL_AGENT_API_BASE | ✅ | - | API地址 |
+| | MODEL_AGENT_API_KEY | ✅ | - | API密钥 |
+| | OPENAI_API_KEY | ⬜ | - | OpenAI兼容密钥 |
+| | OPENAI_BASE_URL | ⬜ | https://api.openai.com/v1 | OpenAI地址 |
+| | LLM_MODEL | ⬜ | gpt-4o | 模型名称 |
+| **威胁情报** | THREAT_BOOK_API_KEY | ✅ | - | 微步API密钥（优先） |
+| | THREATBOOK_API_KEY | ⬜ | - | 微步API密钥（备选） |
+| | THREATBOOK_BASE_URL | ⬜ | https://api.threatbook.cn/v3 | API地址 |
+| | THREATBOOK_ENABLED | ⬜ | true | 是否启用 |
+| **XDR** | XDR_API_BASE_URL | ✅ | - | XDR API地址（优先） |
+| | XDR_BASE_URL | ⬜ | - | XDR API地址（备选） |
+| | XDR_API_KEY | ✅ | - | auth_code认证码 |
+| | XDR_HOST | ⬜ | - | XDR主机地址 |
+| | XDR_ENABLED | ⬜ | true | 是否启用 |
+| **NDR** | NDR_API_BASE_URL | ✅ | - | NDR API地址（优先） |
+| | NDR_BASE_URL | ⬜ | - | NDR API地址（备选） |
+| | NDR_API_KEY | ✅ | - | API密钥 |
+| | NDR_API_SECRET | ✅ | - | API密钥密文（HMAC签名） |
+| | NDR_ENABLED | ⬜ | true | 是否启用 |
+| **资产-CAASM** | CAASM_BASE_URL | ✅ | - | CAASM API地址（优先） |
+| | ASSET_API_BASE_URL | ⬜ | - | CAASM API地址（备选） |
+| | CAASM_API_KEY | ✅ | - | API密钥（优先） |
+| | ASSET_API_KEY | ⬜ | - | API密钥（备选） |
+| | FOBRAIN_API_KEY | ⬜ | - | API密钥（备选2） |
+| | CAASM_ENABLED | ⬜ | true | 是否启用 |
+| **资产-Corplink** | CORPLINK_BASE_URL | ⬜ | - | Corplink API地址 |
+| | CORPLINK_API_KEY | ⬜ | - | API密钥 |
+| | CORPLINK_ENABLED | ⬜ | true | 是否启用 |
+| **钉钉** | DINGTALK_Client_ID | ⬜ | - | OAuth2客户端ID（优先） |
+| | DINGTALK_CLIENT_ID | ⬜ | - | OAuth2客户端ID（备选） |
+| | DINGTALK_Client_Secret | ⬜ | - | OAuth2客户端密钥（优先） |
+| | DINGTALK_CLIENT_SECRET | ⬜ | - | OAuth2客户端密钥（备选） |
+| | DINGTALK_TABLE_ID | ⬜ | - | AI表格ID |
+| | DINGTALK_ENABLED | ⬜ | true | 是否启用 |
+| **ITSM** | ITSM_BASE_URL | ⬜ | - | ITSM API地址 |
+| | ITSM_USER | ⬜ | - | 用户名 |
+| | ITSM_PASSWORD | ⬜ | - | 密码 |
+| | ITSM_REQUEST_USERID | ⬜ | - | 请求用户ID |
+| | ITSM_CTI | ⬜ | 68fca869... | 工单分类ID |
+| | ITSM_ENABLED | ⬜ | true | 是否启用 |
+| **安全校验** | INTERNAL_NETWORKS | ⬜ | 10.0.0.0/8,172.16.0.0/12,192.168.0.0/16 | 内部网段 |
+| | CORE_SYSTEMS | ⬜ | - | 核心系统IP列表 |
+| **监控** | JAEGER_ENDPOINT | ⬜ | - | Jaeger追踪地址 |
+
+> 📌 图例：✅ 必填 | ⬜ 选填（不影响核心流程）
+> 📌 优先变量：代码优先读取的变量名；备选变量：当优先变量不存在时使用
+
+#### 4.9 数据准备验证
+- [ ] 创建 `.env` 文件（复制 `.env.example` 并填入真实值）
+- [ ] 验证LLM模型连通性
+- [ ] 验证XDR API连通性
+- [ ] 验证NDR API连通性
+- [ ] 验证微步威胁情报API连通性
+- [ ] 验证CAASM资产查询API连通性
+- [ ] 验证钉钉/ITSM归档接口（可选）
+
+---
+### Phase 5: 测试与上线（预计3天）
+#### 5.1 测试用例开发
+- [ ] 智能体单元测试完善（tests/unit/agents/）
+- [ ] 工具单元测试完善（tests/unit/tools/）
+- [ ] 全流程集成测试（tests/integration/）
 - [ ] 异常场景测试
-#### 4.2 部署与验证
+- [ ] 真实数据端到端测试
+#### 5.2 部署与验证
 - [ ] 开发环境联调
 - [ ] 测试环境灰度验证
 - [ ] 生产环境部署配置

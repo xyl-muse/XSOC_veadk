@@ -87,10 +87,10 @@ tools:
     api_key: ${XDR_API_KEY:}
     base_url: ${XDR_API_BASE_URL:https://xdr.example.com/api}
 
-  # 资产API
+  # 资产API (CAASM)
   asset:
-    api_key: ${ASSET_API_KEY:}
-    base_url: ${ASSET_API_BASE_URL:https://asset.example.com/api}
+    api_key: ${CAASM_API_KEY:}
+    base_url: ${CAASM_BASE_URL:}
 
   # NDR API
   ndr:
@@ -104,9 +104,9 @@ tools:
 
   # 钉钉API
   dingtalk:
-    app_key: ${DINGTALK_APP_KEY:}
-    app_secret: ${DINGTALK_APP_SECRET:}
-    ai_table_id: ${DINGTALK_AI_TABLE_ID:}
+    client_id: ${DINGTALK_CLIENT_ID:}
+    client_secret: ${DINGTALK_CLIENT_SECRET:}
+    table_id: ${DINGTALK_TABLE_ID:}
 
 # 日志配置
 logging:
