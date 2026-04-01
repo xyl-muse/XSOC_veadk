@@ -39,12 +39,12 @@ class ResponseAgent(Agent):
         security_event = SecurityEvent.from_input(event_data)
         self.logger.info(f"开始风险评估和处置事件: {security_event.event_id}, 类型: {security_event.event_type_name}", trace_id=trace_id)
 
-        # 2. 风险评估
-        risk_assessment = await self._assess_risk(security_event)
+        # 2. 风险评估（内置逻辑）
+        risk_assessment = self._assess_risk(security_event)
         security_event.context["risk_assessment"] = risk_assessment
 
-        # 3. 制定处置策略
-        response_strategy = await self._develop_response_strategy(security_event)
+        # 3. 制定处置策略（内置逻辑）
+        response_strategy = self._develop_response_strategy(security_event)
         security_event.context["response_strategy"] = response_strategy
 
         # 4. 执行处置操作（需要经过HITL机制触发人工审核）
@@ -57,88 +57,85 @@ class ResponseAgent(Agent):
 
         # 6. 处理处置结果
         if verification_result:
-            security_event.status = EventStatus.VISUALIZING
-            security_event.process_history.append({
-                "stage": "response",
-                "stage_name": "风险处置",
-                "result": "处置成功",
-                "risk_assessment": risk_assessment,
-                "response_strategy": response_strategy,
-                "execution_result": execution_result,
-                "verification_result": verification_result
-            })
+            # 只返回结果，不修改状态，不调度其他智能体
             self.logger.info(f"事件处置成功: {security_event.event_id}", trace_id=trace_id)
-            await self.send_to_agent("visualization_agent", security_event.model_dump())
-            await self.context.save_event(security_event.event_id, security_event.model_dump())
             return {
                 "event_id": security_event.event_id,
-                "status": security_event.status.value,
-                "status_name": security_event.status_name,
                 "result": "处置成功",
                 "risk_assessment": risk_assessment,
                 "response_strategy": response_strategy,
                 "execution_result": execution_result,
-                "verification_result": verification_result
+                "verification_result": verification_result,
+                "event_data": security_event.model_dump()
             }
 
         # 7. 处置失败回滚
         rollback_result = await self._rollback_response(security_event)
-        security_event.status = EventStatus.FAILED
-        security_event.process_history.append({
-            "stage": "response",
-            "stage_name": "风险处置",
-            "result": "处置失败",
-            "risk_assessment": risk_assessment,
-            "response_strategy": response_strategy,
-            "execution_result": execution_result,
-            "verification_result": verification_result,
-            "rollback_result": rollback_result
-        })
         self.logger.error(f"事件处置失败: {security_event.event_id}", trace_id=trace_id)
-        await self.send_to_agent("visualization_agent", security_event.model_dump())
-        await self.context.save_event(security_event.event_id, security_event.model_dump())
         return {
             "event_id": security_event.event_id,
-            "status": security_event.status.value,
-            "status_name": security_event.status_name,
             "result": "处置失败",
             "risk_assessment": risk_assessment,
             "response_strategy": response_strategy,
             "execution_result": execution_result,
             "verification_result": verification_result,
-            "rollback_result": rollback_result
+            "rollback_result": rollback_result,
+            "event_data": security_event.model_dump()
         }
 
-    async def _assess_risk(self, security_event: SecurityEvent) -> Dict[str, Any]:
-        """风险评估（通过工具调用实现）"""
-        try:
-            risk_result = await self.call_tool(
-                "risk_assessment",
-                {"event_data": security_event.model_dump()}
-            )
-            return risk_result
-        except Exception as e:
-            self.logger.error(f"风险评估失败: {str(e)}")
-            return {
-                "risk_level": "medium",
-                "impact_range": "small",
-                "asset_importance": "normal"
-            }
+    def _assess_risk(self, security_event: SecurityEvent) -> Dict[str, Any]:
+        """风险评估（内置逻辑）"""
+        # 基于事件优先级和上下文信息评估风险
+        risk_level = security_event.priority.value
 
-    async def _develop_response_strategy(self, security_event: SecurityEvent) -> Dict[str, Any]:
-        """制定处置策略（通过工具调用实现）"""
-        try:
-            strategy_result = await self.call_tool(
-                "response_strategy",
-                {"event_data": security_event.model_dump()}
-            )
-            return strategy_result
-        except Exception as e:
-            self.logger.error(f"制定处置策略失败: {str(e)}")
+        # 根据威胁情报和资产信息调整风险等级
+        threat_intel = security_event.context.get("threat_intel", {})
+        asset_info = security_event.context.get("asset_info", {})
+
+        # 如果威胁情报确认为恶意，提升风险等级
+        if threat_intel.get("is_malicious"):
+            if risk_level in ["low", "medium"]:
+                risk_level = "high"
+
+        # 如果目标资产为关键系统，提升风险等级
+        if asset_info.get("is_critical"):
+            risk_level = "critical"
+
+        return {
+            "risk_level": risk_level,
+            "impact_range": "small" if risk_level == "low" else "medium" if risk_level == "medium" else "large",
+            "asset_importance": "critical" if asset_info.get("is_critical") else "normal"
+        }
+
+    def _develop_response_strategy(self, security_event: SecurityEvent) -> Dict[str, Any]:
+        """制定处置策略（内置逻辑）"""
+        risk_assessment = security_event.context.get("risk_assessment", {})
+        risk_level = risk_assessment.get("risk_level", "medium")
+
+        # 根据风险等级制定不同的处置策略
+        if risk_level == "critical":
+            return {
+                "strategy_type": "aggressive",
+                "execution_steps": ["IP封禁", "终端隔离", "告警通知"],
+                "expected_effect": "阻断攻击源，隔离受害主机"
+            }
+        elif risk_level == "high":
+            return {
+                "strategy_type": "moderate",
+                "execution_steps": ["IP封禁", "告警通知"],
+                "expected_effect": "阻断攻击源，监控后续行为"
+            }
+        elif risk_level == "medium":
             return {
                 "strategy_type": "light",
                 "execution_steps": ["告警通知"],
                 "expected_effect": "监控攻击，及时发现异常"
+            }
+        else:  # low
+            return {
+                "strategy_type": "monitor",
+                "execution_steps": ["告警通知"],
+                "expected_effect": "仅监控，不主动干预"
             }
 
     async def _execute_response(self, security_event: SecurityEvent) -> Dict[str, Any]:
@@ -166,47 +163,124 @@ class ResponseAgent(Agent):
             "timestamp": self._get_current_time()
         }
 
-        # 根据操作类型执行不同的处置操作
+        # 根据操作类型执行不同的处置操作，统一使用response_action工具
         if operation == "IP封禁":
             if security_event.attack_source_ip:
-                ip_block_result = await self.call_tool(
-                    "ip_block",
-                    {"ip": security_event.attack_source_ip}
+                result = await self.call_tool(
+                    "response_action",
+                    {
+                        "action_type": "block",
+                        "target": security_event.attack_source_ip,
+                        "target_type": "ip",
+                        "duration": 3600,
+                        "platform": "all",
+                        "comment": f"XSOC智能体自动封禁 - 事件ID: {security_event.event_id}"
+                    }
                 )
-                operation_result["status"] = "success" if ip_block_result.get("status") == "success" else "failed"
-                operation_result["result"] = ip_block_result
+                operation_result["status"] = "success" if result.get("success") else "failed"
+                operation_result["result"] = result
+            else:
+                operation_result["status"] = "failed"
+                operation_result["result"] = "未找到攻击源IP"
+        elif operation == "IP解封":
+            if security_event.attack_source_ip:
+                result = await self.call_tool(
+                    "response_action",
+                    {
+                        "action_type": "unblock",
+                        "target": security_event.attack_source_ip,
+                        "target_type": "ip",
+                        "platform": "all",
+                        "comment": f"XSOC智能体回滚解封 - 事件ID: {security_event.event_id}"
+                    }
+                )
+                operation_result["status"] = "success" if result.get("success") else "failed"
+                operation_result["result"] = result
             else:
                 operation_result["status"] = "failed"
                 operation_result["result"] = "未找到攻击源IP"
         elif operation == "白名单管理":
             if security_event.attack_source_ip:
-                whitelist_result = await self.call_tool(
-                    "whitelist_management",
-                    {"ip": security_event.attack_source_ip, "action": "add"}
+                result = await self.call_tool(
+                    "response_action",
+                    {
+                        "action_type": "whitelist",
+                        "target": security_event.attack_source_ip,
+                        "target_type": "ip",
+                        "platform": "all",
+                        "comment": f"XSOC智能体添加白名单 - 事件ID: {security_event.event_id}"
+                    }
                 )
-                operation_result["status"] = "success" if whitelist_result.get("status") == "success" else "failed"
-                operation_result["result"] = whitelist_result
+                operation_result["status"] = "success" if result.get("success") else "failed"
+                operation_result["result"] = result
+            else:
+                operation_result["status"] = "failed"
+                operation_result["result"] = "未找到攻击源IP"
+        elif operation == "白名单移除":
+            if security_event.attack_source_ip:
+                result = await self.call_tool(
+                    "response_action",
+                    {
+                        "action_type": "remove_whitelist",
+                        "target": security_event.attack_source_ip,
+                        "target_type": "ip",
+                        "platform": "all",
+                        "comment": f"XSOC智能体回滚移除白名单 - 事件ID: {security_event.event_id}"
+                    }
+                )
+                operation_result["status"] = "success" if result.get("success") else "failed"
+                operation_result["result"] = result
             else:
                 operation_result["status"] = "failed"
                 operation_result["result"] = "未找到攻击源IP"
         elif operation == "终端隔离":
             if security_event.target_asset_ip:
-                terminal_isolation_result = await self.call_tool(
-                    "terminal_isolation",
-                    {"ip": security_event.target_asset_ip}
+                # 终端隔离通常通过封禁IP实现
+                result = await self.call_tool(
+                    "response_action",
+                    {
+                        "action_type": "block",
+                        "target": security_event.target_asset_ip,
+                        "target_type": "ip",
+                        "duration": 7200,
+                        "platform": "xdr",
+                        "comment": f"XSOC智能体终端隔离 - 事件ID: {security_event.event_id}"
+                    }
                 )
-                operation_result["status"] = "success" if terminal_isolation_result.get("status") == "success" else "failed"
-                operation_result["result"] = terminal_isolation_result
+                operation_result["status"] = "success" if result.get("success") else "failed"
+                operation_result["result"] = result
+            else:
+                operation_result["status"] = "failed"
+                operation_result["result"] = "未找到目标资产IP"
+        elif operation == "终端解封":
+            if security_event.target_asset_ip:
+                result = await self.call_tool(
+                    "response_action",
+                    {
+                        "action_type": "unblock",
+                        "target": security_event.target_asset_ip,
+                        "target_type": "ip",
+                        "platform": "xdr",
+                        "comment": f"XSOC智能体回滚终端解封 - 事件ID: {security_event.event_id}"
+                    }
+                )
+                operation_result["status"] = "success" if result.get("success") else "failed"
+                operation_result["result"] = result
             else:
                 operation_result["status"] = "failed"
                 operation_result["result"] = "未找到目标资产IP"
         elif operation == "告警通知":
-            alert_notification_result = await self.call_tool(
-                "alert_notification",
-                {"event_id": security_event.event_id}
+            # 告警通知使用data_archive工具记录到钉钉
+            result = await self.call_tool(
+                "data_archive",
+                {
+                    "archive_type": "dingtalk",
+                    "event_id": security_event.event_id,
+                    "event_data": security_event.model_dump()
+                }
             )
-            operation_result["status"] = "success" if alert_notification_result.get("status") == "success" else "failed"
-            operation_result["result"] = alert_notification_result
+            operation_result["status"] = "success" if result.get("success") else "failed"
+            operation_result["result"] = result
 
         return operation_result
 
@@ -245,7 +319,7 @@ class ResponseAgent(Agent):
             "IP封禁": "IP解封",
             "白名单管理": "白名单移除",
             "终端隔离": "终端解封",
-            "告警通知": "告警取消"
+            "告警通知": None  # 告警通知无需回滚
         }
 
         return rollback_map.get(operation, None)

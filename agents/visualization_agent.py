@@ -53,27 +53,16 @@ class VisualizationAgent(Agent):
         })
         security_event.context["dingtalk_sync_result"] = dingtalk_sync_result
 
-        security_event.status = EventStatus.ARCHIVED
-        security_event.process_history.append({
-            "stage": "visualization",
-            "stage_name": "数据可视化",
-            "result": "事件报告生成和数据同步成功",
-            "event_report": event_report,
-            "xdr_archive_result": xdr_archive_result,
-            "dingtalk_sync_result": dingtalk_sync_result
-        })
-
+        # 只返回结果，不修改状态
         self.logger.info(f"事件报告生成和数据同步成功: {security_event.event_id}", trace_id=trace_id)
-        await self.context.save_event(security_event.event_id, security_event.model_dump())
 
         return {
             "event_id": security_event.event_id,
-            "status": security_event.status.value,
-            "status_name": security_event.status_name,
             "result": "事件报告生成和数据同步成功",
             "event_report": event_report,
             "xdr_archive_result": xdr_archive_result,
-            "dingtalk_sync_result": dingtalk_sync_result
+            "dingtalk_sync_result": dingtalk_sync_result,
+            "event_data": security_event.model_dump()
         }
 
     def _generate_event_report(self, security_event: SecurityEvent) -> str:

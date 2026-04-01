@@ -51,22 +51,13 @@ class InvestigationAgent(Agent):
         # 2. 误报规则库匹配（快速判断）
         false_positive_result = await self._check_false_positive_rules(security_event)
         if false_positive_result:
-            security_event.status = EventStatus.FALSE_POSITIVE
-            security_event.process_history.append({
-                "stage": "investigation",
-                "stage_name": "事件研判",
-                "result": "误报",
-                "reason": false_positive_result
-            })
+            # 只返回结果，不修改状态，不调度其他智能体
             self.logger.info(f"事件研判为误报: {security_event.event_id}, 原因: {false_positive_result}", trace_id=trace_id)
-            await self.send_to_agent("visualization_agent", security_event.model_dump())
-            await self.context.save_event(security_event.event_id, security_event.model_dump())
             return {
                 "event_id": security_event.event_id,
-                "status": security_event.status.value,
-                "status_name": security_event.status_name,
                 "result": "误报",
-                "reason": false_positive_result
+                "reason": false_positive_result,
+                "event_data": security_event.model_dump()
             }
 
         # 3. 调用工具收集研判所需信息
@@ -74,7 +65,7 @@ class InvestigationAgent(Agent):
         if security_event.attack_source_ip:
             intel_result = await self.call_tool(
                 "threat_intel_query",
-                {"ip": security_event.attack_source_ip}
+                {"ip": security_event.attack_source_ip, "platform": "all"}
             )
             security_event.context["threat_intel"] = intel_result
 
@@ -82,36 +73,27 @@ class InvestigationAgent(Agent):
         if security_event.target_asset_ip:
             asset_result = await self.call_tool(
                 "asset_query",
-                {"ip": security_event.target_asset_ip}
+                {"asset_ip": security_event.target_asset_ip, "platform": "all"}
             )
             security_event.context["asset_info"] = asset_result
 
-        # 查询XDR事件详情
-        xdr_result = await self.call_tool(
-            "xdr_event_query",
-            {"event_id": security_event.event_id}
+        # 查询事件详情
+        event_result = await self.call_tool(
+            "event_query",
+            {"event_id": security_event.event_id, "platform": "all"}
         )
-        security_event.context["alert_details"] = xdr_result
+        security_event.context["alert_details"] = event_result
 
         # 4. 多源证据交叉验证逻辑
         verification_result = await self._verify_multisource_evidence(security_event)
         if verification_result:
-            security_event.status = EventStatus.TRACING
-            security_event.process_history.append({
-                "stage": "investigation",
-                "stage_name": "事件研判",
-                "result": "真实事件",
-                "clues": verification_result
-            })
+            # 只返回结果，不修改状态，不调度其他智能体
             self.logger.info(f"事件研判为真实攻击: {security_event.event_id}", trace_id=trace_id)
-            await self.send_to_agent("tracing_agent", security_event.model_dump())
-            await self.context.save_event(security_event.event_id, security_event.model_dump())
             return {
                 "event_id": security_event.event_id,
-                "status": security_event.status.value,
-                "status_name": security_event.status_name,
                 "result": "真实事件",
-                "clues": verification_result
+                "clues": verification_result,
+                "event_data": security_event.model_dump()
             }
 
         # 5. LLM研判（最终判断）
@@ -135,46 +117,31 @@ XDR告警详情：{security_event.context.get('alert_details', '无')}
         response = await self.llm.chat([self.instruction, user_prompt])
         judgement_result = response.content
 
-        # 6. 处理研判结果
+        # 6. 处理研判结果，只返回结果，不修改状态
         if "误报" in judgement_result:
-            security_event.status = EventStatus.FALSE_POSITIVE
-            security_event.process_history.append({
-                "stage": "investigation",
-                "stage_name": "事件研判",
-                "result": "误报",
-                "reason": judgement_result
-            })
             self.logger.info(f"事件研判为误报: {security_event.event_id}", trace_id=trace_id)
-            await self.send_to_agent("visualization_agent", security_event.model_dump())
+            return {
+                "event_id": security_event.event_id,
+                "result": "误报",
+                "reason": judgement_result,
+                "event_data": security_event.model_dump()
+            }
         elif "真实事件" in judgement_result:
-            security_event.status = EventStatus.TRACING
-            security_event.process_history.append({
-                "stage": "investigation",
-                "stage_name": "事件研判",
-                "result": "真实事件",
-                "clues": self.extract_clues(judgement_result)
-            })
             self.logger.info(f"事件研判为真实攻击: {security_event.event_id}", trace_id=trace_id)
-            await self.send_to_agent("tracing_agent", security_event.model_dump())
+            return {
+                "event_id": security_event.event_id,
+                "result": "真实事件",
+                "clues": self.extract_clues(judgement_result),
+                "event_data": security_event.model_dump()
+            }
         else:
-            security_event.status = EventStatus.PENDING_MANUAL_CONFIRM
-            security_event.process_history.append({
-                "stage": "investigation",
-                "stage_name": "事件研判",
-                "result": "可疑待确认",
-                "reason": judgement_result
-            })
             self.logger.warning(f"事件研判为可疑，待人工确认: {security_event.event_id}", trace_id=trace_id)
-
-        # 7. 保存事件状态
-        await self.context.save_event(security_event.event_id, security_event.model_dump())
-
-        return {
-            "event_id": security_event.event_id,
-            "status": security_event.status.value,
-            "status_name": security_event.status_name,
-            "result": judgement_result
-        }
+            return {
+                "event_id": security_event.event_id,
+                "result": "可疑待确认",
+                "reason": judgement_result,
+                "event_data": security_event.model_dump()
+            }
 
     async def _check_false_positive_rules(self, security_event: SecurityEvent) -> Optional[str]:
         """误报规则库匹配（通过工具调用实现）"""

@@ -39,49 +39,48 @@ class TracingAgent(Agent):
         self.logger.info(f"开始溯源分析事件: {security_event.event_id}, 类型: {security_event.event_type_name}", trace_id=trace_id)
 
         # 2. 调用工具收集溯源所需信息
-        # 查询攻击路径
+        # 查询事件详情和举证信息
+        if security_event.event_id:
+            event_detail = await self.call_tool(
+                "event_query",
+                {"event_id": security_event.event_id, "platform": "all"}
+            )
+            security_event.context["event_detail"] = event_detail
+
+        # 查询相关告警信息
         if security_event.attack_source_ip:
-            attack_path_result = await self.call_tool(
-                "attack_path_query",
-                {"ip": security_event.attack_source_ip}
+            alert_result = await self.call_tool(
+                "alert_risk_query",
+                {"asset_ip": security_event.attack_source_ip, "time_range": "7d", "platform": "all"}
             )
-            security_event.context["attack_path"] = attack_path_result
+            security_event.context["related_alerts"] = alert_result
 
-        # 查询网络流量
-        if security_event.attack_source_ip and security_event.target_asset_ip:
-            network_traffic_result = await self.call_tool(
-                "network_traffic_query",
-                {"source_ip": security_event.attack_source_ip, "target_ip": security_event.target_asset_ip}
-            )
-            security_event.context["network_traffic"] = network_traffic_result
-
-        # 查询进程实体
+        # 查询目标资产风险信息
         if security_event.target_asset_ip:
-            process_entity_result = await self.call_tool(
-                "process_entity_query",
-                {"ip": security_event.target_asset_ip}
+            risk_result = await self.call_tool(
+                "alert_risk_query",
+                {"asset_ip": security_event.target_asset_ip, "time_range": "7d", "platform": "all"}
             )
-            security_event.context["process_entity"] = process_entity_result
+            security_event.context["target_risk_info"] = risk_result
+
+        # 查询资产详情
+        if security_event.target_asset_ip:
+            asset_result = await self.call_tool(
+                "asset_query",
+                {"asset_ip": security_event.target_asset_ip, "platform": "all"}
+            )
+            security_event.context["target_asset_info"] = asset_result
 
         # 3. 还原攻击路径
         attack_path = await self._reconstruct_attack_path(security_event)
         if attack_path:
-            security_event.status = EventStatus.RESPONDING
-            security_event.process_history.append({
-                "stage": "tracing",
-                "stage_name": "溯源分析",
-                "result": "攻击路径还原成功",
-                "attack_path": attack_path
-            })
+            # 只返回结果，不修改状态，不调度其他智能体
             self.logger.info(f"攻击路径还原成功: {security_event.event_id}", trace_id=trace_id)
-            await self.send_to_agent("response_agent", security_event.model_dump())
-            await self.context.save_event(security_event.event_id, security_event.model_dump())
             return {
                 "event_id": security_event.event_id,
-                "status": security_event.status.value,
-                "status_name": security_event.status_name,
                 "result": "攻击路径还原成功",
-                "attack_path": attack_path
+                "attack_path": attack_path,
+                "event_data": security_event.model_dump()
             }
 
         # 4. LLM溯源分析（最终判断）
@@ -97,41 +96,47 @@ class TracingAgent(Agent):
 威胁定义名称：{security_event.context.get('threat_define_name', '无')}
 研判结果：{security_event.context.get('judgement_result', '无')}
 
-攻击路径查询结果：{security_event.context.get('attack_path', '无')}
-网络流量查询结果：{security_event.context.get('network_traffic', '无')}
-进程实体查询结果：{security_event.context.get('process_entity', '无')}
+事件详情查询结果：{security_event.context.get('event_detail', '无')}
+相关告警查询结果：{security_event.context.get('related_alerts', '无')}
+目标风险信息查询结果：{security_event.context.get('target_risk_info', '无')}
+目标资产信息查询结果：{security_event.context.get('target_asset_info', '无')}
 """
 
         response = await self.llm.chat([self.instruction, user_prompt])
         tracing_result = response.content
 
-        # 5. 处理溯源结果
-        security_event.status = EventStatus.RESPONDING
-        security_event.process_history.append({
-            "stage": "tracing",
-            "stage_name": "溯源分析",
-            "result": "溯源分析完成",
-            "tracing_result": tracing_result
-        })
+        # 5. 处理溯源结果，只返回结果，不修改状态
         self.logger.info(f"溯源分析完成: {security_event.event_id}", trace_id=trace_id)
-        await self.send_to_agent("response_agent", security_event.model_dump())
-        await self.context.save_event(security_event.event_id, security_event.model_dump())
-
         return {
             "event_id": security_event.event_id,
-            "status": security_event.status.value,
-            "status_name": security_event.status_name,
-            "result": tracing_result
+            "result": "溯源分析完成",
+            "tracing_result": tracing_result,
+            "attack_clues": self.extract_attack_clues(tracing_result),
+            "event_data": security_event.model_dump()
         }
 
     async def _reconstruct_attack_path(self, security_event: SecurityEvent) -> Optional[dict]:
-        """还原攻击路径（通过工具调用实现）"""
+        """还原攻击路径（使用现有工具组合实现）"""
         try:
-            attack_path_result = await self.call_tool(
-                "attack_path_reconstruction",
-                {"event_data": security_event.model_dump()}
-            )
-            return attack_path_result.get("attack_path")
+            # 使用LLM分析收集到的信息，还原攻击路径
+            event_detail = security_event.context.get("event_detail", {})
+            related_alerts = security_event.context.get("related_alerts", {})
+            target_risk_info = security_event.context.get("target_risk_info", {})
+            target_asset_info = security_event.context.get("target_asset_info", {})
+
+            # 如果有足够的信息，构建攻击路径
+            if event_detail or related_alerts:
+                attack_path = {
+                    "entry_point": security_event.attack_source_ip or "未知",
+                    "target": security_event.target_asset_ip or "未知",
+                    "attack_time": security_event.attack_time or security_event.create_time,
+                    "event_evidence": event_detail,
+                    "related_alerts": related_alerts,
+                    "target_risks": target_risk_info,
+                    "asset_info": target_asset_info
+                }
+                return attack_path
+            return None
         except Exception as e:
             self.logger.error(f"还原攻击路径失败: {str(e)}")
             return None
