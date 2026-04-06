@@ -105,3 +105,6 @@ docs&data_demo/api_docs/CAASM/云盘资产信息原脚本.py
 
 # 项目深化理解和追踪文档
 dev_study_log.md
+
+# 项目历史配置存档，和新版本无关，保留历史回顾文件
+veadk.yaml.deprecated
