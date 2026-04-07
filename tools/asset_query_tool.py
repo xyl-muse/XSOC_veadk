@@ -12,6 +12,36 @@ from google.adk.tools.tool_context import ToolContext
 
 def _get_config():
     """从环境变量获取工具配置"""
+    # NDR多实例配置
+    ndr_instances = {}
+    
+    # NDR_NORTH 实例（集团北数据中心）
+    if os.getenv("NDR_NORTH_BASE_URL"):
+        ndr_instances["ndr_north"] = {
+            "enabled": os.getenv("NDR_NORTH_ENABLED", "true").lower() == "true",
+            "base_url": os.getenv("NDR_NORTH_BASE_URL", ""),
+            "api_key": os.getenv("NDR_NORTH_API_KEY", ""),
+            "api_secret": os.getenv("NDR_NORTH_API_SECRET", ""),
+        }
+    
+    # NDR_SOUTH 实例（集团南数据中心）
+    if os.getenv("NDR_SOUTH_BASE_URL"):
+        ndr_instances["ndr_south"] = {
+            "enabled": os.getenv("NDR_SOUTH_ENABLED", "true").lower() == "true",
+            "base_url": os.getenv("NDR_SOUTH_BASE_URL", ""),
+            "api_key": os.getenv("NDR_SOUTH_API_KEY", ""),
+            "api_secret": os.getenv("NDR_SOUTH_API_SECRET", ""),
+        }
+    
+    # 向后兼容：支持旧版单实例配置
+    if not ndr_instances and os.getenv("NDR_API_BASE_URL"):
+        ndr_instances["ndr"] = {
+            "enabled": os.getenv("NDR_ENABLED", "true").lower() == "true",
+            "base_url": os.getenv("NDR_API_BASE_URL", os.getenv("NDR_BASE_URL", "")),
+            "api_key": os.getenv("NDR_API_KEY", ""),
+            "api_secret": os.getenv("NDR_API_SECRET", ""),
+        }
+    
     return {
         "caasm": {
             "enabled": os.getenv("CAASM_ENABLED", "true").lower() == "true",
@@ -28,11 +58,7 @@ def _get_config():
             "base_url": os.getenv("XDR_API_BASE_URL", os.getenv("XDR_BASE_URL", "")),
             "api_key": os.getenv("XDR_API_KEY", ""),
         },
-        "ndr": {
-            "enabled": os.getenv("NDR_ENABLED", "true").lower() == "true",
-            "base_url": os.getenv("NDR_API_BASE_URL", os.getenv("NDR_BASE_URL", "")),
-            "api_key": os.getenv("NDR_API_KEY", ""),
-        },
+        "ndr_instances": ndr_instances,
     }
 
 
@@ -77,34 +103,39 @@ async def asset_query(
     xdr_base_url = config["xdr"]["base_url"]
     xdr_api_key = config["xdr"]["api_key"]
 
-    # NDR平台配置
-    ndr_enabled = config["ndr"]["enabled"]
-    ndr_base_url = config["ndr"]["base_url"]
-    ndr_api_key = config["ndr"]["api_key"]
+    # NDR多实例配置
+    ndr_instances = config.get("ndr_instances", {})
 
     platform = platform.lower()
 
-    # 收集需要查询的平台
-    platforms_to_query = []
+    # 收集需要查询的平台和实例
+    platforms_to_query = []  # 格式: (platform, instance_name)
     if platform == "all":
         # 按优先级顺序添加
         if caasm_enabled:
-            platforms_to_query.append("caasm")
+            platforms_to_query.append(("caasm", None))
         if corplink_enabled:
-            platforms_to_query.append("corplink")
+            platforms_to_query.append(("corplink", None))
         if xdr_enabled:
-            platforms_to_query.append("xdr")
-        if ndr_enabled:
-            platforms_to_query.append("ndr")
+            platforms_to_query.append(("xdr", None))
+        # 所有NDR实例
+        for instance_name, instance_config in ndr_instances.items():
+            if instance_config["enabled"]:
+                platforms_to_query.append(("ndr", instance_name))
+    elif platform == "ndr":
+        # 所有NDR实例
+        for instance_name, instance_config in ndr_instances.items():
+            if instance_config["enabled"]:
+                platforms_to_query.append(("ndr", instance_name))
     else:
-        platforms_to_query = [platform]
+        platforms_to_query.append((platform, None))
 
     if not platforms_to_query:
         return {"error": "没有可用的查询平台，请检查配置"}
 
-    # 并发查询所有平台
+    # 并发查询所有平台/实例
     tasks = []
-    for p in platforms_to_query:
+    for p, instance_name in platforms_to_query:
         if p == "caasm":
             tasks.append(_query_caasm(asset_ip, caasm_base_url, caasm_api_key, timeout))
         elif p == "corplink":
@@ -112,7 +143,8 @@ async def asset_query(
         elif p == "xdr":
             tasks.append(_query_xdr(asset_ip, xdr_base_url, xdr_api_key, timeout))
         elif p == "ndr":
-            tasks.append(_query_ndr(asset_ip, ndr_base_url, ndr_api_key, timeout))
+            ndr_config = ndr_instances[instance_name]
+            tasks.append(_query_ndr(asset_ip, ndr_config["base_url"], ndr_config["api_key"], timeout))
 
     results = await asyncio.gather(*tasks, return_exceptions=True)
 

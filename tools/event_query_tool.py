@@ -11,17 +11,43 @@ from google.adk.tools.tool_context import ToolContext
 
 def _get_config():
     """从环境变量获取工具配置"""
+    # NDR多实例配置
+    ndr_instances = {}
+    
+    # NDR_NORTH 实例（集团北数据中心）
+    if os.getenv("NDR_NORTH_BASE_URL"):
+        ndr_instances["ndr_north"] = {
+            "enabled": os.getenv("NDR_NORTH_ENABLED", "true").lower() == "true",
+            "base_url": os.getenv("NDR_NORTH_BASE_URL", ""),
+            "api_key": os.getenv("NDR_NORTH_API_KEY", ""),
+            "api_secret": os.getenv("NDR_NORTH_API_SECRET", ""),
+        }
+    
+    # NDR_SOUTH 实例（集团南数据中心）
+    if os.getenv("NDR_SOUTH_BASE_URL"):
+        ndr_instances["ndr_south"] = {
+            "enabled": os.getenv("NDR_SOUTH_ENABLED", "true").lower() == "true",
+            "base_url": os.getenv("NDR_SOUTH_BASE_URL", ""),
+            "api_key": os.getenv("NDR_SOUTH_API_KEY", ""),
+            "api_secret": os.getenv("NDR_SOUTH_API_SECRET", ""),
+        }
+    
+    # 向后兼容：支持旧版单实例配置
+    if not ndr_instances and os.getenv("NDR_API_BASE_URL"):
+        ndr_instances["ndr"] = {
+            "enabled": os.getenv("NDR_ENABLED", "true").lower() == "true",
+            "base_url": os.getenv("NDR_API_BASE_URL", os.getenv("NDR_BASE_URL", "")),
+            "api_key": os.getenv("NDR_API_KEY", ""),
+            "api_secret": os.getenv("NDR_API_SECRET", ""),
+        }
+    
     return {
         "xdr": {
             "enabled": os.getenv("XDR_ENABLED", "true").lower() == "true",
             "base_url": os.getenv("XDR_API_BASE_URL", os.getenv("XDR_BASE_URL", "")),
             "api_key": os.getenv("XDR_API_KEY", ""),
         },
-        "ndr": {
-            "enabled": os.getenv("NDR_ENABLED", "true").lower() == "true",
-            "base_url": os.getenv("NDR_API_BASE_URL", os.getenv("NDR_BASE_URL", "")),
-            "api_key": os.getenv("NDR_API_KEY", ""),
-        },
+        "ndr_instances": ndr_instances,
     }
 
 

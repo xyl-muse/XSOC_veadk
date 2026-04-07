@@ -9,18 +9,44 @@ from google.adk.tools.tool_context import ToolContext
 
 
 def _get_config():
-    """从环境变量获取工具配置"""
+    """从环境变量获取工具配置，支持多NDR实例"""
+    # NDR多实例配置
+    ndr_instances = {}
+    
+    # NDR_NORTH 实例（集团北数据中心）
+    if os.getenv("NDR_NORTH_BASE_URL"):
+        ndr_instances["ndr_north"] = {
+            "enabled": os.getenv("NDR_NORTH_ENABLED", "true").lower() == "true",
+            "base_url": os.getenv("NDR_NORTH_BASE_URL", ""),
+            "api_key": os.getenv("NDR_NORTH_API_KEY", ""),
+            "api_secret": os.getenv("NDR_NORTH_API_SECRET", ""),
+        }
+    
+    # NDR_SOUTH 实例（集团南数据中心）
+    if os.getenv("NDR_SOUTH_BASE_URL"):
+        ndr_instances["ndr_south"] = {
+            "enabled": os.getenv("NDR_SOUTH_ENABLED", "true").lower() == "true",
+            "base_url": os.getenv("NDR_SOUTH_BASE_URL", ""),
+            "api_key": os.getenv("NDR_SOUTH_API_KEY", ""),
+            "api_secret": os.getenv("NDR_SOUTH_API_SECRET", ""),
+        }
+    
+    # 向后兼容：支持旧版单实例配置
+    if not ndr_instances and os.getenv("NDR_API_BASE_URL"):
+        ndr_instances["ndr"] = {
+            "enabled": os.getenv("NDR_ENABLED", "true").lower() == "true",
+            "base_url": os.getenv("NDR_API_BASE_URL", os.getenv("NDR_BASE_URL", "")),
+            "api_key": os.getenv("NDR_API_KEY", ""),
+            "api_secret": os.getenv("NDR_API_SECRET", ""),
+        }
+    
     return {
         "xdr": {
             "enabled": os.getenv("XDR_ENABLED", "true").lower() == "true",
             "base_url": os.getenv("XDR_API_BASE_URL", os.getenv("XDR_BASE_URL", "")),
             "api_key": os.getenv("XDR_API_KEY", ""),
         },
-        "ndr": {
-            "enabled": os.getenv("NDR_ENABLED", "true").lower() == "true",
-            "base_url": os.getenv("NDR_API_BASE_URL", os.getenv("NDR_BASE_URL", "")),
-            "api_key": os.getenv("NDR_API_KEY", ""),
-        },
+        "ndr_instances": ndr_instances,
         "corplink": {
             "enabled": os.getenv("CORPLINK_ENABLED", "true").lower() == "true",
             "base_url": os.getenv("CORPLINK_BASE_URL", ""),
@@ -64,10 +90,8 @@ async def alert_risk_query(
     xdr_base_url = config["xdr"]["base_url"]
     xdr_api_key = config["xdr"]["api_key"]
 
-    # NDR平台配置
-    ndr_enabled = config["ndr"]["enabled"]
-    ndr_base_url = config["ndr"]["base_url"]
-    ndr_api_key = config["ndr"]["api_key"]
+    # NDR多实例配置
+    ndr_instances = config.get("ndr_instances", {})
 
     # Corplink平台配置
     corplink_enabled = config["corplink"]["enabled"]
@@ -76,17 +100,24 @@ async def alert_risk_query(
 
     platform = platform.lower()
 
-    # 收集需要查询的平台
-    platforms_to_query = []
+    # 收集需要查询的平台和实例
+    platforms_to_query = []  # 格式: (platform, instance_name)
     if platform == "all":
         if xdr_enabled:
-            platforms_to_query.append("xdr")
-        if ndr_enabled:
-            platforms_to_query.append("ndr")
+            platforms_to_query.append(("xdr", None))
+        # 所有NDR实例
+        for instance_name, instance_config in ndr_instances.items():
+            if instance_config["enabled"]:
+                platforms_to_query.append(("ndr", instance_name))
         if corplink_enabled:
-            platforms_to_query.append("corplink")
+            platforms_to_query.append(("corplink", None))
+    elif platform == "ndr":
+        # 所有NDR实例
+        for instance_name, instance_config in ndr_instances.items():
+            if instance_config["enabled"]:
+                platforms_to_query.append(("ndr", instance_name))
     else:
-        platforms_to_query = [platform]
+        platforms_to_query.append((platform, None))
 
     if not platforms_to_query:
         return {"error": "没有可用的查询平台，请检查配置"}
@@ -94,7 +125,7 @@ async def alert_risk_query(
     # 解析时间范围
     start_time, end_time = _parse_time_range(time_range)
 
-    # 并发查询所有平台
+    # 并发查询所有平台/实例
     tasks = []
     query_params = {
         "asset_ip": asset_ip,
@@ -106,11 +137,12 @@ async def alert_risk_query(
         "page_size": page_size
     }
 
-    for p in platforms_to_query:
+    for p, instance_name in platforms_to_query:
         if p == "xdr":
             tasks.append(_query_xdr_alert(query_params, xdr_base_url, xdr_api_key, timeout))
         elif p == "ndr":
-            tasks.append(_query_ndr_alert(query_params, ndr_base_url, ndr_api_key, timeout))
+            ndr_config = ndr_instances[instance_name]
+            tasks.append(_query_ndr_alert(query_params, ndr_config["base_url"], ndr_config["api_key"], timeout))
         elif p == "corplink":
             tasks.append(_query_corplink_alert(query_params, corplink_base_url, corplink_api_key, timeout))
 
@@ -118,12 +150,13 @@ async def alert_risk_query(
 
     # 处理查询结果
     platform_results = {}
-    for i, p in enumerate(platforms_to_query):
+    for i, (p, instance_name) in enumerate(platforms_to_query):
+        key = f"{p}_{instance_name}" if instance_name else p
         result = results[i]
         if isinstance(result, Exception):
-            platform_results[p] = {"error": str(result)}
+            platform_results[key] = {"error": str(result)}
         else:
-            platform_results[p] = result
+            platform_results[key] = result
 
     # 合并结果
     merged_result = _merge_alert_results(platform_results)

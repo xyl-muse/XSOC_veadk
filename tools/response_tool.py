@@ -10,19 +10,44 @@ from google.adk.tools.tool_context import ToolContext
 
 
 def _get_config():
-    """从环境变量获取工具配置"""
+    """从环境变量获取工具配置，支持多NDR实例"""
+    # NDR多实例配置（集团北、集团南两个数据中心）
+    ndr_instances = {}
+    
+    # NDR_NORTH 实例（集团北数据中心）
+    if os.getenv("NDR_NORTH_BASE_URL"):
+        ndr_instances["ndr_north"] = {
+            "enabled": os.getenv("NDR_NORTH_ENABLED", "true").lower() == "true",
+            "base_url": os.getenv("NDR_NORTH_BASE_URL", ""),
+            "api_key": os.getenv("NDR_NORTH_API_KEY", ""),
+            "api_secret": os.getenv("NDR_NORTH_API_SECRET", ""),
+        }
+    
+    # NDR_SOUTH 实例（集团南数据中心）
+    if os.getenv("NDR_SOUTH_BASE_URL"):
+        ndr_instances["ndr_south"] = {
+            "enabled": os.getenv("NDR_SOUTH_ENABLED", "true").lower() == "true",
+            "base_url": os.getenv("NDR_SOUTH_BASE_URL", ""),
+            "api_key": os.getenv("NDR_SOUTH_API_KEY", ""),
+            "api_secret": os.getenv("NDR_SOUTH_API_SECRET", ""),
+        }
+    
+    # 向后兼容：支持旧版单实例配置
+    if not ndr_instances and os.getenv("NDR_API_BASE_URL"):
+        ndr_instances["ndr"] = {
+            "enabled": os.getenv("NDR_ENABLED", "true").lower() == "true",
+            "base_url": os.getenv("NDR_API_BASE_URL", os.getenv("NDR_BASE_URL", "")),
+            "api_key": os.getenv("NDR_API_KEY", ""),
+            "api_secret": os.getenv("NDR_API_SECRET", ""),
+        }
+    
     return {
         "xdr": {
             "enabled": os.getenv("XDR_ENABLED", "true").lower() == "true",
             "base_url": os.getenv("XDR_API_BASE_URL", os.getenv("XDR_BASE_URL", "")),
             "api_key": os.getenv("XDR_API_KEY", ""),
         },
-        "ndr": {
-            "enabled": os.getenv("NDR_ENABLED", "true").lower() == "true",
-            "base_url": os.getenv("NDR_API_BASE_URL", os.getenv("NDR_BASE_URL", "")),
-            "api_key": os.getenv("NDR_API_KEY", ""),
-            "api_secret": os.getenv("NDR_API_SECRET", ""),
-        },
+        "ndr_instances": ndr_instances,  # 多实例字典
         # 内部网段配置，用于安全校验
         "internal_networks": os.getenv("INTERNAL_NETWORKS", "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16").split(","),
         # 核心业务系统IP列表
@@ -1102,26 +1127,34 @@ async def response_action(
 
     platform = platform.lower()
 
-    # 收集需要操作的平台
-    platforms_to_execute = []
+    # 收集需要操作的平台和实例
+    platforms_to_execute = []  # 格式: (platform, instance_name)
+    ndr_instances = config.get("ndr_instances", {})
+    
     if platform == "all":
         if config["xdr"]["enabled"]:
-            platforms_to_execute.append("xdr")
-        if config["ndr"]["enabled"]:
-            platforms_to_execute.append("ndr")
+            platforms_to_execute.append(("xdr", None))
+        # 所有NDR实例
+        for instance_name, instance_config in ndr_instances.items():
+            if instance_config["enabled"]:
+                platforms_to_execute.append(("ndr", instance_name))
+    elif platform == "ndr":
+        # 所有NDR实例
+        for instance_name, instance_config in ndr_instances.items():
+            if instance_config["enabled"]:
+                platforms_to_execute.append(("ndr", instance_name))
     else:
-        platforms_to_execute = [platform]
+        platforms_to_execute.append((platform, None))
 
     if not platforms_to_execute:
         return {"success": False, "error": "没有可用的操作平台，请检查配置"}
 
-    # 执行操作
-    results = []
-    executed_actions = []  # 记录已执行的操作，用于回滚
-
-    for p in platforms_to_execute:
+    # 执行操作 - 并发执行多NDR实例
+    async def execute_on_platform(p: str, instance_name: Optional[str]) -> Dict[str, Any]:
+        """在指定平台/实例上执行操作"""
         result = None
-
+        executed_action = None
+        
         if p == "xdr":
             if action_type == "update_status":
                 target_ids = [t.strip() for t in target.split(",")]
@@ -1144,7 +1177,6 @@ async def response_action(
                         timeout
                     )
             elif action_type == "whitelist":
-                # 简化白名单创建：根据target_type创建对应规则
                 rule_type_map = {"ip": "srcIp", "domain": "domain"}
                 rule_list = [{
                     "type": rule_type_map.get(target_type, "srcIp"),
@@ -1166,7 +1198,7 @@ async def response_action(
                     timeout=timeout
                 )
                 if result.get("success"):
-                    executed_actions.append(("whitelist", p, target, result.get("whitelist_id")))
+                    executed_action = ("whitelist", p, target, result.get("whitelist_id"))
             elif action_type == "remove_whitelist":
                 result = await _xdr_delete_whitelist(
                     config["xdr"]["base_url"],
@@ -1176,11 +1208,11 @@ async def response_action(
                 )
             elif action_type == "block":
                 result = {"success": False, "error": "XDR平台暂不支持IP封禁操作，请使用NDR平台"}
-
+        
         elif p == "ndr":
-            ndr_config = config["ndr"]
+            ndr_config = ndr_instances[instance_name]
             if not ndr_config.get("api_secret"):
-                result = {"success": False, "error": "NDR平台缺少api_secret配置"}
+                result = {"success": False, "error": f"NDR实例 {instance_name} 缺少api_secret配置"}
             elif action_type in ["block", "linkage_block"]:
                 result = await _ndr_add_linkage_block(
                     ndr_config["base_url"],
@@ -1192,7 +1224,7 @@ async def response_action(
                     timeout
                 )
                 if result.get("success"):
-                    executed_actions.append(("block", p, target, None))
+                    executed_action = ("block", f"{p}_{instance_name}", target, None)
             elif action_type == "aside_block":
                 result = await _ndr_add_aside_block(
                     ndr_config["base_url"],
@@ -1204,9 +1236,8 @@ async def response_action(
                     timeout
                 )
                 if result.get("success"):
-                    executed_actions.append(("aside_block", p, target, None))
+                    executed_action = ("aside_block", f"{p}_{instance_name}", target, None)
             elif action_type == "unblock":
-                # 尝试删除联动阻断
                 result = await _ndr_delete_linkage_block(
                     ndr_config["base_url"],
                     ndr_config["api_key"],
@@ -1225,7 +1256,7 @@ async def response_action(
                     timeout=timeout
                 )
                 if result.get("success"):
-                    executed_actions.append(("whitelist", p, target, result.get("whitelist_id")))
+                    executed_action = ("whitelist", f"{p}_{instance_name}", target, result.get("whitelist_id"))
             elif action_type == "remove_whitelist":
                 result = await _ndr_delete_whitelist(
                     ndr_config["base_url"],
@@ -1244,9 +1275,36 @@ async def response_action(
                     comment,
                     timeout
                 )
-
-        if result:
-            results.append({"platform": p, "result": result})
+        
+        return {
+            "platform": f"{p}_{instance_name}" if instance_name else p,
+            "result": result,
+            "executed_action": executed_action
+        }
+    
+    # 并发执行所有平台/实例
+    tasks = [execute_on_platform(p, name) for p, name in platforms_to_execute]
+    execution_results = await asyncio.gather(*tasks, return_exceptions=True)
+    
+    # 处理结果
+    results = []
+    executed_actions = []
+    
+    for i, exec_result in enumerate(execution_results):
+        if isinstance(exec_result, Exception):
+            p, name = platforms_to_execute[i]
+            key = f"{p}_{name}" if name else p
+            results.append({
+                "platform": key,
+                "result": {"success": False, "error": str(exec_result)}
+            })
+        else:
+            results.append({
+                "platform": exec_result["platform"],
+                "result": exec_result["result"]
+            })
+            if exec_result["executed_action"]:
+                executed_actions.append(exec_result["executed_action"])
 
     # 统计成功/失败数量
     success_count = sum(1 for r in results if r["result"].get("success"))
