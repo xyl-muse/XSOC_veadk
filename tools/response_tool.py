@@ -1377,7 +1377,13 @@ async def query_block_list(
     if platform == "xdr":
         return {"success": False, "error": "XDR平台不支持封禁列表查询"}
 
-    ndr_config = config["ndr"]
+    # 支持多NDR实例，获取第一个启用的实例
+    ndr_instances = config.get("ndr_instances", {})
+    ndr_config = next((inst for inst in ndr_instances.values() if inst.get("enabled")), None)
+    
+    if not ndr_config:
+        return {"success": False, "error": "没有启用的NDR实例"}
+    
     base_url = ndr_config.get("base_url", "")
     api_key = ndr_config.get("api_key", "")
     api_secret = ndr_config.get("api_secret", "")
@@ -1415,22 +1421,34 @@ async def query_whitelist_list(
     timeout = 30
 
     platform = platform.lower()
-    platforms_to_query = []
+    platforms_to_query = []  # 格式: (platform, instance_name)
+    
+    # 获取NDR多实例配置
+    ndr_instances = config.get("ndr_instances", {})
+    
     if platform == "all":
         if config["xdr"]["enabled"]:
-            platforms_to_query.append("xdr")
-        if config["ndr"]["enabled"]:
-            platforms_to_query.append("ndr")
+            platforms_to_query.append(("xdr", None))
+        # 所有NDR实例
+        for instance_name, instance_config in ndr_instances.items():
+            if instance_config["enabled"]:
+                platforms_to_query.append(("ndr", instance_name))
+    elif platform == "ndr":
+        # 所有NDR实例
+        for instance_name, instance_config in ndr_instances.items():
+            if instance_config["enabled"]:
+                platforms_to_query.append(("ndr", instance_name))
     else:
-        platforms_to_query = [platform]
+        platforms_to_query.append((platform, None))
 
     if not platforms_to_query:
         return {"success": False, "error": "没有可用的查询平台"}
 
     results = {}
-    for p in platforms_to_query:
+    for p, instance_name in platforms_to_query:
+        key = f"{p}_{instance_name}" if instance_name else p
         if p == "xdr":
-            results[p] = await _xdr_list_whitelists(
+            results[key] = await _xdr_list_whitelists(
                 config["xdr"]["base_url"],
                 config["xdr"]["api_key"],
                 page,
@@ -1439,10 +1457,11 @@ async def query_whitelist_list(
                 timeout
             )
         elif p == "ndr":
-            results[p] = await _ndr_list_whitelists(
-                config["ndr"]["base_url"],
-                config["ndr"]["api_key"],
-                config["ndr"]["api_secret"],
+            ndr_config = ndr_instances[instance_name]
+            results[key] = await _ndr_list_whitelists(
+                ndr_config["base_url"],
+                ndr_config["api_key"],
+                ndr_config["api_secret"],
                 page,
                 page_size,
                 timeout
@@ -1510,9 +1529,12 @@ async def query_custom_ioc_list(
     config = _get_config()
     timeout = 30
 
-    ndr_config = config["ndr"]
-    if not ndr_config.get("enabled"):
-        return {"success": False, "error": "NDR平台未启用"}
+    # 支持多NDR实例，获取第一个启用的实例
+    ndr_instances = config.get("ndr_instances", {})
+    ndr_config = next((inst for inst in ndr_instances.values() if inst.get("enabled")), None)
+    
+    if not ndr_config:
+        return {"success": False, "error": "没有启用的NDR实例"}
 
     return await _ndr_list_custom_iocs(
         ndr_config["base_url"],

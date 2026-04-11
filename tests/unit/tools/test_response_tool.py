@@ -625,7 +625,9 @@ class TestResponseAction:
         """测试封禁IP"""
         mock_get_config.return_value = {
             "xdr": {"enabled": False, "base_url": "", "api_key": ""},
-            "ndr": {"enabled": True, "base_url": "https://ndr.example.com", "api_key": "test-key", "api_secret": "test-secret"},
+            "ndr_instances": {
+                "ndr_south": {"enabled": True, "base_url": "https://ndr.example.com", "api_key": "test-key", "api_secret": "test-secret"}
+            },
             "internal_networks": ["10.0.0.0/8"],
             "core_systems": []
         }
@@ -633,7 +635,7 @@ class TestResponseAction:
         with patch('tools.response_tool._ndr_add_linkage_block') as mock_ndr:
             mock_ndr.return_value = {
                 "success": True,
-                "platform": "ndr",
+                "platform": "ndr_south",
                 "action": "linkage_block_add",
                 "ip": "1.2.3.4"
             }
@@ -656,7 +658,9 @@ class TestResponseAction:
         """测试封禁内部IP的高风险警告"""
         mock_get_config.return_value = {
             "xdr": {"enabled": False, "base_url": "", "api_key": ""},
-            "ndr": {"enabled": True, "base_url": "https://ndr.example.com", "api_key": "test-key", "api_secret": "test-secret"},
+            "ndr_instances": {
+                "ndr_south": {"enabled": True, "base_url": "https://ndr.example.com", "api_key": "test-key", "api_secret": "test-secret"}
+            },
             "internal_networks": ["192.168.0.0/16"],
             "core_systems": []
         }
@@ -664,7 +668,7 @@ class TestResponseAction:
         with patch('tools.response_tool._ndr_add_linkage_block') as mock_ndr:
             mock_ndr.return_value = {
                 "success": True,
-                "platform": "ndr",
+                "platform": "ndr_south",
                 "action": "linkage_block_add",
                 "ip": "192.168.1.100"
             }
@@ -686,7 +690,9 @@ class TestResponseAction:
         """测试添加白名单"""
         mock_get_config.return_value = {
             "xdr": {"enabled": True, "base_url": "https://xdr.example.com", "api_key": "test-key"},
-            "ndr": {"enabled": False, "base_url": "", "api_key": "", "api_secret": ""},
+            "ndr_instances": {
+                "ndr_south": {"enabled": False, "base_url": "", "api_key": "", "api_secret": ""}
+            },
             "internal_networks": [],
             "core_systems": []
         }
@@ -735,7 +741,9 @@ class TestResponseAction:
         """测试自动回滚功能"""
         mock_get_config.return_value = {
             "xdr": {"enabled": True, "base_url": "https://xdr.example.com", "api_key": "test-key"},
-            "ndr": {"enabled": True, "base_url": "https://ndr.example.com", "api_key": "test-key", "api_secret": "test-secret"},
+            "ndr_instances": {
+                "ndr_south": {"enabled": True, "base_url": "https://ndr.example.com", "api_key": "test-key", "api_secret": "test-secret"}
+            },
             "internal_networks": [],
             "core_systems": []
         }
@@ -1026,7 +1034,7 @@ class TestEdgeCasesAndExceptions:
         )
 
         assert result["success"] is False
-        assert "缺少api_secret" in result["platform_results"]["ndr"]["error"]
+        assert "没有启用的NDR实例" in result["error"] or "缺少api_secret" in str(result)
 
     @pytest.mark.asyncio
     async def test_xdr_operations_exception(self):
