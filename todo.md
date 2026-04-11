@@ -194,64 +194,78 @@
 ### Phase 4: 项目关联变量及真实数据准备（预计2天）
 > 📌 本阶段目标：准备所有外部系统的真实API凭证和配置，确保实测上线阶段能正常调用
 
-#### 4.1 LLM模型配置（核心依赖）
-- [ ] **VEADK框架模型配置**
-  - [ ] `MODEL_AGENT_NAME` - 模型名称（如：doubao-pro-32k）
-  - [ ] `MODEL_AGENT_PROVIDER` - 模型提供商（如：volcengine）
-  - [ ] `MODEL_AGENT_API_BASE` - 模型API地址
-  - [ ] `MODEL_AGENT_API_KEY` - 模型API密钥
+#### 4.1 LLM模型配置（核心依赖）✅ 已完成
+- [x] **VEADK框架模型配置**
+  - [x] `MODEL_AGENT_NAME` - 模型名称（iflow-rome-30ba3b）
+  - [x] `MODEL_AGENT_PROVIDER` - 模型提供商（openai，OpenAI兼容接口）
+  - [x] `MODEL_AGENT_API_BASE` - 模型API地址（https://apis.iflow.cn/v1）
+  - [x] `MODEL_AGENT_API_KEY` - 模型API密钥（已配置）
 
-#### 4.2 威胁情报平台配置
-- [ ] **微步在线（Threatbook）- 优先级最高**
-  - [ ] `THREATBOOK_ENABLED` - 是否启用（默认true）
-  - [ ] `THREATBOOK_BASE_URL` - API地址（默认：https://api.threatbook.cn/v3）
-  - [ ] `THREAT_BOOK_API_KEY` 或 `THREATBOOK_API_KEY` - API密钥
+#### 4.2 威胁情报平台配置 ✅ 已完成
+- [x] **微步在线（Threatbook）- 优先级最高**
+  - [x] `THREATBOOK_ENABLED` - 是否启用（true）
+  - [x] `THREATBOOK_BASE_URL` - API地址（https://api.threatbook.cn/v3）
+  - [x] `THREAT_BOOK_API_KEY` - API密钥（已配置）
 
-#### 4.3 XDR安全运营平台配置
-- [ ] **XDR平台 - 核心数据源**
-  - [ ] `XDR_ENABLED` - 是否启用（默认true）
-  - [ ] `XDR_API_BASE_URL` 或 `XDR_BASE_URL` - API地址
-  - [ ] `XDR_API_KEY` - auth_code认证码（用于HMAC-SHA256签名）
-  - [ ] `XDR_HOST` - XDR主机地址
+#### 4.3 XDR安全运营平台配置 ✅ 已完成
+- [x] **XDR平台 - 核心数据源**
+  - [x] `XDR_ENABLED` - 是否启用（true）
+  - [x] `XDR_API_BASE_URL` - API地址（https://10.0.180.117）
+  - [x] `XDR_API_KEY` - auth_code认证码（已配置，用于HMAC-SHA256签名）
+  - [x] `XDR_HOST` - XDR主机地址（可选）
+- ⚠️ **待确认**：XDR API URL格式与代码拼接逻辑（#{base_url}/api/xdr/v1/alerts/list）
 
-#### 4.4 NDR网络检测响应平台配置
-- [ ] **NDR平台 - 网络流量分析**
-  - [ ] `NDR_ENABLED` - 是否启用（默认true）
-  - [ ] `NDR_API_BASE_URL` 或 `NDR_BASE_URL` - API地址
-  - [ ] `NDR_API_KEY` - API密钥
-  - [ ] `NDR_API_SECRET` - API密钥密文（用于HMAC签名）
+#### 4.4 NDR网络检测响应平台配置 ✅ 已完成（多实例支持）
+- [x] **NDR多实例架构（集团北/南双数据中心）**
+  - [x] `NDR_ENABLED` - 总开关（true）
+  - [x] **NDR_NORTH实例（集团北数据中心）**
+    - [x] `NDR_NORTH_ENABLED` - 是否启用（true）
+    - [x] `NDR_NORTH_BASE_URL` - API地址（http://10.0.180.99）
+    - [x] `NDR_NORTH_API_KEY` - API密钥（已配置）
+    - [x] `NDR_NORTH_API_SECRET` - HMAC签名密文（已配置）
+  - [x] **NDR_SOUTH实例（集团南数据中心）**
+    - [x] `NDR_SOUTH_ENABLED` - 是否启用（true）
+    - [x] `NDR_SOUTH_BASE_URL` - API地址（https://10.0.1.10）
+    - [x] `NDR_SOUTH_API_KEY` - API密钥（已配置）
+    - [x] `NDR_SOUTH_API_SECRET` - HMAC签名密文（已配置）
+- [x] **代码更新完成**
+  - [x] 查询操作：并发查询两个NDR实例，自动合并结果
+  - [x] 处置操作：双实例同步执行，确保两个数据中心同时生效
+  - [x] 结果标识：通过 `source_instance` 字段区分数据来源
+  - [x] 向后兼容：保留旧版单实例 `NDR_*` 配置支持
 
-#### 4.5 资产管理系统配置
-- [ ] **CAASM/云盘资产 - 服务器资产（优先级最高）**
-  - [ ] `CAASM_ENABLED` - 是否启用（默认true）
-  - [ ] `CAASM_BASE_URL` 或 `ASSET_API_BASE_URL` - API地址
-  - [ ] `CAASM_API_KEY` 或 `ASSET_API_KEY` 或 `FOBRAIN_API_KEY` - API密钥
-  - [ ] `CLOUD_STORAGE_DATA` - 云盘资产JSON数据（可选，从assets_data.json读取）
+#### 4.5 资产管理系统配置 ✅ 已完成
+- [x] **CAASM/云盘资产 - 服务器资产（优先级最高）**
+  - [x] `CAASM_ENABLED` - 是否启用（true）
+  - [x] `CAASM_BASE_URL` - API地址（https://caasm.longi.com）
+  - [x] `CAASM_API_KEY` - API密钥（已配置）
+  - [x] `CLOUD_STORAGE_DATA` - 云盘资产JSON数据（已配置完整数据）
+- ⚠️ **待确认**：CAASM URL地址和工具集API路径匹配问题
 
-- [ ] **Corplink - 办公终端资产**
-  - [ ] `CORPLINK_ENABLED` - 是否启用（默认true）
-  - [ ] `CORPLINK_BASE_URL` - API地址
-  - [ ] `CORPLINK_API_KEY` - API密钥
+- [x] **Corplink - 办公终端资产**
+  - [x] `CORPLINK_ENABLED` - 是否启用（true）
+  - [x] `CORPLINK_BASE_URL` - API地址（https://feilian.longi.com:10443/api/）
+  - [x] `CORPLINK_API_KEY` - API密钥（已配置）
 
-#### 4.6 数据归档平台配置
-- [ ] **钉钉AI表格 - 事件数据同步**
-  - [ ] `DINGTALK_ENABLED` - 是否启用（默认true）
-  - [ ] `DINGTALK_CLIENT_ID` 或 `DINGTALK_Client_ID` - OAuth2客户端ID
-  - [ ] `DINGTALK_CLIENT_SECRET` 或 `DINGTALK_Client_Secret` - OAuth2客户端密钥
-  - [ ] `DINGTALK_TABLE_ID` - AI表格ID
+#### 4.6 数据归档平台配置 ✅ 已完成
+- [x] **钉钉AI表格 - 事件数据同步**
+  - [x] `DINGTALK_ENABLED` - 是否启用（true）
+  - [x] `DINGTALK_Client_ID` - OAuth2客户端ID（已配置）
+  - [x] `DINGTALK_Client_Secret` - OAuth2客户端密钥（已配置）
+  - [x] `DINGTALK_TABLE_ID` - AI表格ID（已配置）
 
-- [ ] **ITSM工单系统 - 工单创建**
-  - [ ] `ITSM_ENABLED` - 是否启用（默认true）
-  - [ ] `ITSM_BASE_URL` - API地址
-  - [ ] `ITSM_USER` - 登录用户名
-  - [ ] `ITSM_PASSWORD` - 登录密码
-  - [ ] `ITSM_REQUEST_USERID` - 请求用户ID
-  - [ ] `ITSM_CTI` - 工单分类ID（默认：68fca869c7814cdbbe9dff32ff0ab9ea）
+- [x] **ITSM工单系统 - 工单创建**
+  - [x] `ITSM_ENABLED` - 是否启用（true）
+  - [x] `ITSM_BASE_URL` - API地址（https://itsm.longi.com）
+  - [x] `ITSM_USER` - 登录用户名（ai_user）
+  - [x] `ITSM_PASSWORD` - 登录密码（已配置）
+  - [x] `ITSM_REQUEST_USERID` - 请求用户ID（387081）
+  - [x] `ITSM_CTI` - 工单分类ID（已配置）
 
-#### 4.7 安全校验配置
-- [ ] **处置操作安全校验**
-  - [ ] `INTERNAL_NETWORKS` - 内部网段列表（默认：10.0.0.0/8,172.16.0.0/12,192.168.0.0/16）
-  - [ ] `CORE_SYSTEMS` - 核心业务系统IP列表（逗号分隔）
+#### 4.7 安全校验配置 ✅ 已完成
+- [x] **处置操作安全校验**
+  - [x] `INTERNAL_NETWORKS` - 内部网段列表（10.0.0.0/8,172.16.0.0/12,192.168.0.0/16）
+  - [x] `CORE_SYSTEMS` - 核心业务系统IP列表（已配置，暂为空）
 
 #### 4.8 环境变量配置清单汇总
 
@@ -307,13 +321,19 @@
 > 📌 优先变量：代码优先读取的变量名；备选变量：当优先变量不存在时使用
 
 #### 4.9 数据准备验证
-- [ ] 创建 `.env` 文件（复制 `.env.example` 并填入真实值）
+- [x] 创建 `.env` 文件（✅ 已完成，包含所有真实API凭证）
 - [ ] 验证LLM模型连通性
-- [ ] 验证XDR API连通性
-- [ ] 验证NDR API连通性
+- [ ] 验证XDR API连通性（⚠️ 需确认URL格式与代码拼接逻辑）
+- [ ] 验证NDR API连通性（NDR_NORTH + NDR_SOUTH 双实例）
 - [ ] 验证微步威胁情报API连通性
-- [ ] 验证CAASM资产查询API连通性
-- [ ] 验证钉钉/ITSM归档接口（可选）
+- [ ] 验证CAASM资产查询API连通性（⚠️ 需确认工具集API路径）
+- [ ] 验证Corplink资产查询API连通性
+- [ ] 验证钉钉/ITSM归档接口
+
+**配置总结**：
+- ✅ 所有必填配置项已完成（LLM、威胁情报、XDR、NDR、资产系统、归档平台）
+- ✅ NDR多实例配置完成（集团北/南双数据中心）
+- ⚠️ 待确认项：XDR URL格式、CAASM工具集API路径
 
 ---
 ### Phase 5: 测试与上线（预计3天）
