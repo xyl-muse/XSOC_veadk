@@ -955,11 +955,17 @@ async def _verify_block_result(
     """验证封禁操作是否生效"""
     try:
         if platform == "ndr":
+            # 获取第一个启用的NDR实例
+            ndr_instances = config.get("ndr_instances", {})
+            ndr_config = next((inst for inst in ndr_instances.values() if inst.get("enabled")), None)
+            if not ndr_config:
+                return False
+            
             # 查询NDR阻断列表，确认目标IP已封禁
             result = await _ndr_list_linkage_blocks(
-                config["ndr"]["base_url"],
-                config["ndr"]["api_key"],
-                config["ndr"]["api_secret"],
+                ndr_config["base_url"],
+                ndr_config["api_key"],
+                ndr_config["api_secret"],
                 page=1,
                 page_size=100,
                 timeout=timeout
@@ -996,10 +1002,16 @@ async def _verify_whitelist_result(
                         if target in rule.get("view", []):
                             return True
         elif platform == "ndr":
+            # 获取第一个启用的NDR实例
+            ndr_instances = config.get("ndr_instances", {})
+            ndr_config = next((inst for inst in ndr_instances.values() if inst.get("enabled")), None)
+            if not ndr_config:
+                return False
+            
             result = await _ndr_list_whitelists(
-                config["ndr"]["base_url"],
-                config["ndr"]["api_key"],
-                config["ndr"]["api_secret"],
+                ndr_config["base_url"],
+                ndr_config["api_key"],
+                ndr_config["api_secret"],
                 page=1,
                 page_size=100,
                 timeout=timeout
@@ -1024,10 +1036,16 @@ async def _rollback_block(
     """回滚封禁操作"""
     try:
         if platform == "ndr":
+            # 获取第一个启用的NDR实例
+            ndr_instances = config.get("ndr_instances", {})
+            ndr_config = next((inst for inst in ndr_instances.values() if inst.get("enabled")), None)
+            if not ndr_config:
+                return {"success": False, "error": "没有启用的NDR实例"}
+            
             return await _ndr_delete_linkage_block(
-                config["ndr"]["base_url"],
-                config["ndr"]["api_key"],
-                config["ndr"]["api_secret"],
+                ndr_config["base_url"],
+                ndr_config["api_key"],
+                ndr_config["api_secret"],
                 target,
                 timeout
             )
@@ -1053,10 +1071,16 @@ async def _rollback_whitelist(
                 timeout
             )
         elif platform == "ndr" and whitelist_id:
+            # 获取第一个启用的NDR实例
+            ndr_instances = config.get("ndr_instances", {})
+            ndr_config = next((inst for inst in ndr_instances.values() if inst.get("enabled")), None)
+            if not ndr_config:
+                return {"success": False, "error": "没有启用的NDR实例"}
+            
             return await _ndr_delete_whitelist(
-                config["ndr"]["base_url"],
-                config["ndr"]["api_key"],
-                config["ndr"]["api_secret"],
+                ndr_config["base_url"],
+                ndr_config["api_key"],
+                ndr_config["api_secret"],
                 whitelist_id,
                 timeout
             )

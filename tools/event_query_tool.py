@@ -90,27 +90,32 @@ async def event_query(
     xdr_base_url = config["xdr"]["base_url"]
     xdr_api_key = config["xdr"]["api_key"]
 
-    # NDR平台配置
-    ndr_enabled = config["ndr"]["enabled"]
-    ndr_base_url = config["ndr"]["base_url"]
-    ndr_api_key = config["ndr"]["api_key"]
+    # NDR多实例配置
+    ndr_instances = config.get("ndr_instances", {})
 
     platform = platform.lower()
 
-    # 收集需要查询的平台，严格按照优先级顺序：XDR > NDR
-    platforms_to_query = []
+    # 收集需要查询的平台和实例
+    platforms_to_query = []  # 格式: (platform, instance_name)
     if platform == "all":
         if xdr_enabled:
-            platforms_to_query.append("xdr")
-        if ndr_enabled:
-            platforms_to_query.append("ndr")
+            platforms_to_query.append(("xdr", None))
+        # 所有NDR实例
+        for instance_name, instance_config in ndr_instances.items():
+            if instance_config["enabled"]:
+                platforms_to_query.append(("ndr", instance_name))
+    elif platform == "ndr":
+        # 所有NDR实例
+        for instance_name, instance_config in ndr_instances.items():
+            if instance_config["enabled"]:
+                platforms_to_query.append(("ndr", instance_name))
     else:
-        platforms_to_query = [platform]
+        platforms_to_query.append((platform, None))
 
     if not platforms_to_query:
         return {"error": "没有可用的查询平台，请检查配置"}
 
-    # 并发查询所有平台
+    # 并发查询所有平台/实例
     tasks = []
     query_params = {
         "event_id": event_id,
@@ -121,22 +126,24 @@ async def event_query(
         "page_size": page_size
     }
 
-    for p in platforms_to_query:
+    for p, instance_name in platforms_to_query:
         if p == "xdr":
             tasks.append(_query_xdr_event(query_params, xdr_base_url, xdr_api_key, timeout))
         elif p == "ndr":
-            tasks.append(_query_ndr_event(query_params, ndr_base_url, ndr_api_key, timeout))
+            ndr_config = ndr_instances[instance_name]
+            tasks.append(_query_ndr_event(query_params, ndr_config["base_url"], ndr_config["api_key"], timeout))
 
     results = await asyncio.gather(*tasks, return_exceptions=True)
 
     # 处理查询结果
     platform_results = {}
-    for i, p in enumerate(platforms_to_query):
+    for i, (p, instance_name) in enumerate(platforms_to_query):
+        key = f"{p}_{instance_name}" if instance_name else p
         result = results[i]
         if isinstance(result, Exception):
-            platform_results[p] = {"error": str(result)}
+            platform_results[key] = {"error": str(result)}
         else:
-            platform_results[p] = result
+            platform_results[key] = result
 
     # 合并结果
     merged_result = _merge_event_results(platform_results)

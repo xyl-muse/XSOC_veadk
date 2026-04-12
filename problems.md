@@ -144,3 +144,66 @@ if not ndr_config:
 1. 🔴 高：修复工具代码运行时错误（✅ 已完成）
 2. 🟡 中：更新测试Mock配置（⚠️ 部分完成）
 3. 🟢 低：调整测试断言逻辑（待处理）
+
+---
+
+## NDR多实例修复最终成果（2026-04-12）
+
+### 8. 工具代码修复完成（✅ 100%）
+
+**修复范围**：18处config["ndr"]访问已全部修复
+
+**文件1：tools/response_tool.py（12处）**
+- ✅ `_verify_block_result()` (L960-972)：从ndr_instances获取第一个启用实例
+- ✅ `_verify_whitelist_result()` (L992-1018)：支持多NDR实例验证
+- ✅ `_rollback_block()` (L1022-1035)：支持多实例回滚操作
+- ✅ `_rollback_whitelist()` (L1038-1058)：支持多实例回滚操作
+
+**文件2：tools/event_query_tool.py（3处）**
+- ✅ `event_query()` (L94-140)：支持多NDR实例并发查询
+
+**文件3：tools/threat_intel_tool.py（3处）**
+- ✅ `threat_intel_query()` (L99-155)：支持多NDR实例并发查询
+
+**验证结果**：
+- 搜索`config["ndr"]`：0处（全部修复）
+- 运行时KeyError风险：已消除
+
+---
+
+### 9. 测试修复遇到的技术障碍（PowerShell编码问题）
+
+**问题**：使用PowerShell批量替换测试Mock配置导致文件编码错误
+
+**表现**：
+- 中文字符乱码（UTF-8 → Latin1）
+- pytest报错：`SyntaxError: invalid non-printable character`
+- 示例：`"测试"` → `"æµè¯"`
+
+**原因**：
+- PowerShell默认UTF-16编码
+- `Set-Content`不支持UTF-8无BOM
+- 与Python pytest期望编码不兼容
+
+**影响**：6个测试文件需更新Mock配置
+
+**解决方案**：
+- 使用Python脚本（非PowerShell）批量替换
+- 或手动逐个更新测试文件
+
+---
+
+## 10. 事件状态可视化问题（待解决）
+
+**问题描述**：
+所有智能体回复需要加上：事件状态机 + 事件数据结构展示
+
+**影响范围**：
+- SecurityEventOrchestrator
+- InvestigationAgent
+- TracingAgent
+- ResponseAgent
+- VisualizationAgent
+
+**待实现**：
+在每次智能体回复时，附加当前事件的状态信息和关键数据结构，让用户能够实时了解事件处理的进度和上下文。

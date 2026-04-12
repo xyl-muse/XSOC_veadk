@@ -41,13 +41,28 @@ cp .env.example .env
 # 编辑.env文件，填入LLM密钥和各类API配置
 ```
 ### 启动服务
+
 ```bash
-python main.py
+veadk web
 ```
+
+或使用自定义端口：
+```bash
+veadk web --port 8888
+```
+
+或外部访问：
+```bash
+veadk web --host 0.0.0.0 --port 8000
+```
+
 ### 访问地址
-- 🔧 VEADK管理面板：http://localhost:8888
-- 📚 API文档：http://localhost:8888/docs
-- 📊 监控面板：http://localhost:8888/monitor
+
+- 🔧 VEADK管理面板：http://localhost:8000
+- 📚 API文档：http://localhost:8000/docs
+- 📊 监控面板：http://localhost:8000/monitor
+
+**注意**：默认端口为8000，可通过 `--port` 参数修改
 ## 📁 项目结构（VEADK官方标准）
 ```
 xsoc-agent/

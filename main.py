@@ -1,18 +1,34 @@
-"""XSOC安全运营智能体系统入口"""
-from veadk import VEADKApp
+# -*- coding: utf-8 -*-
+"""
+XSOC安全运营智能体系统入口
 
-# 导入根智能体
-from flows.security_event_flow import root_agent
+启动方式（VeADK 0.5.29+）：
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-# 初始化VEADK应用
-app = VEADKApp(
-    name="xsoc-security-agent",
-    description="智能安全运营多智能体系统，实现安全事件自动化研判、溯源、处置全闭环"
-)
+【方式1】Web服务（推荐）
+  启动命令: veadk web
+  访问地址: http://localhost:8000
+  可选参数:
+    - 改变端口: veadk web --port 8888
+    - 外部访问: veadk web --host 0.0.0.0
+    - 调试模式: veadk web --log_level DEBUG
 
-# 显式注册根智能体
-app.register_agent(root_agent)
+【方式2】命令行测试
+  python main.py --test
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+说明：
+- 新版VeADK已废弃VEADKApp类
+- Web服务必须通过 'veadk web' 命令启动
+- 项目已创建 agent.py 和 __init__.py 以符合VeADK规范
+"""
+
+import sys
 
 if __name__ == "__main__":
-    # 启动服务，默认端口8888，自带Web管理页面、API文档、监控面板
-    app.run(host="0.0.0.0", port=8888, debug=True)
+    if "--test" in sys.argv:
+        print("\n运行命令行测试...")
+        print("提示：命令行测试功能待实现，建议使用 Web 服务进行测试：veadk web")
+    else:
+        print(__doc__)

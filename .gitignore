@@ -108,3 +108,8 @@ dev_study_log.md
 
 # 项目历史配置存档，和新版本无关，保留历史回顾文件
 veadk.yaml.deprecated
+
+#项目相关的个人笔记和总结
+NOTES.md
+.iflow
+.claude
