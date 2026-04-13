@@ -4,6 +4,14 @@ from typing import Dict, Any, Optional, List
 
 from schemas.security_event import SecurityEvent, EventStatus
 
+# 导入工具函数（VEADK要求tools必须是函数对象）
+from tools import (
+    threat_intel_query,
+    asset_query,
+    event_query,
+    alert_risk_query,
+)
+
 
 class InvestigationAgent(Agent):
     """
@@ -14,12 +22,12 @@ class InvestigationAgent(Agent):
     display_name: str = "事件研判专家"
     description: str = "负责安全事件真实性研判，区分误报和真实攻击，提取关键线索"
 
-    # 可用工具列表
-    tools: List[str] = [
-        "threat_intel_query",    # 威胁情报查询
-        "asset_query",           # 资产信息查询
-        "event_query",           # 事件信息查询
-        "alert_risk_query",      # 告警风险查询
+    # 注册工具函数（需要类型注解）
+    tools: list = [
+        threat_intel_query,
+        asset_query,
+        event_query,
+        alert_risk_query,
     ]
 
 

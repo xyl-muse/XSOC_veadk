@@ -3,6 +3,14 @@ from veadk import Agent
 from typing import Dict, Any, Optional, List
 from schemas.security_event import SecurityEvent, EventStatus
 
+# 导入工具函数（VEADK要求tools必须是函数对象）
+from tools import (
+    response_action,
+    alert_risk_query,
+    asset_query,
+    data_archive,
+)
+
 
 class ResponseAgent(Agent):
     """
@@ -13,12 +21,12 @@ class ResponseAgent(Agent):
     display_name: str = "风险处置专家"
     description: str = "负责对真实攻击事件进行风险评估，制定并执行最小影响的处置策略"
 
-    # 可用工具列表
-    tools: List[str] = [
-        "response_action",       # 处置操作（封禁、解封、白名单等）
-        "alert_risk_query",      # 告警风险查询
-        "asset_query",           # 资产信息查询
-        "data_archive",          # 数据归档（用于通知）
+    # 注册工具函数（需要类型注解）
+    tools: list = [
+        response_action,
+        alert_risk_query,
+        asset_query,
+        data_archive,
     ]
 
     # 智能体系统提示词

@@ -5,6 +5,9 @@ from schemas.security_event import SecurityEvent, EventStatus
 import json
 from datetime import datetime
 
+# 导入工具函数（VEADK要求tools必须是函数对象）
+from tools import data_archive
+
 
 class VisualizationAgent(Agent):
     """
@@ -15,10 +18,8 @@ class VisualizationAgent(Agent):
     display_name: str = "数据可视化专家"
     description: str = "负责事件报告生成、XDR数据回写和钉钉AI表格同步"
 
-    # 可用工具列表
-    tools: List[str] = [
-        "data_archive",          # 数据归档（XDR回写、钉钉同步、ITSM工单）
-    ]
+    # 注册工具函数（需要类型注解）
+    tools: list = [data_archive]
 
     instruction: str = """
 你是资深安全数据可视化专家，负责安全事件的报告生成、XDR系统数据回写和钉钉AI表格同步工作。你的职责是：
