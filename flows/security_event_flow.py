@@ -384,9 +384,12 @@ class SecurityEventOrchestrator(Agent):
 - 处理失败时记录详细错误信息
 - 保持完整的处理链路和审计日志
 
+## 关键提醒
+调用investigation_agent后，必须检查其返回结果，并根据结果继续调用后续智能体，不要停止！
+
 ## 示例流程
 用户发送：{"agentId": "xxx", "state": {"name": "攻击事件", "uuId": "xxx", ...}}
-你应该：立即调用investigation_agent处理这个JSON数据
+你应该：立即调用investigation_agent处理这个JSON数据，然后根据返回结果继续调度
 """
 
     def __init__(self, **kwargs):
